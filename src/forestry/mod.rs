@@ -540,6 +540,9 @@ mod tests {
                     use $digest;
                     use proptest::collection::vec;
 
+                    type ForestryT = Forestry<$digest>;
+                    $crate::test_state_crdt_properties!(ForestryT);
+
                     fn non_empty_string() -> impl Strategy<Value = String> {
                         any::<String>().prop_filter("must not be empty", |s| !s.is_empty())
                     }

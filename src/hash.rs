@@ -24,10 +24,14 @@ impl std::fmt::Debug for Hash {
 }
 
 impl Arbitrary for Hash {
-    type Parameters = ();
+    type Parameters = [u8; 32];
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(inner: Self::Parameters) -> Self::Strategy {
+        Just(inner).prop_map(Hash::new).boxed()
+    }
+
+    fn arbitrary() -> Self::Strategy {
         any::<[u8; 32]>().prop_map(Hash::new).boxed()
     }
 }
@@ -45,7 +49,7 @@ impl Hash {
     }
 
     /// Returns a zero hash (all bytes set to 0).
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Self([0u8; 32])
     }
 
@@ -121,3 +125,4 @@ mod tests {
     crate::test_to_bytes!(Hash);
     crate::test_to_hex!(Hash);
 }
+

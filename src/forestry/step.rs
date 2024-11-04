@@ -32,6 +32,20 @@ pub enum Step {
     },
 }
 
+impl Step {
+    pub fn is_leaf(&self) -> bool {
+        matches!(self, Self::Leaf { .. })
+    }
+
+    pub fn is_branch(&self) -> bool {
+        matches!(self, Self::Branch { .. })
+    }
+
+    pub fn is_fork(&self) -> bool {
+        matches!(self, Self::Fork { .. })
+    }
+}
+
 impl ToBytes for Step {
     type Output = Vec<u8>;
 
@@ -200,4 +214,22 @@ impl PartialOrd for Step {
             (Step::Leaf { .. }, Step::Fork { .. }) => Some(Ordering::Greater),
         }
     }
+}
+
+impl Default for Step {
+    fn default() -> Self {
+        Step::Branch {
+            skip: 0,
+            neighbors: [Hash::default(); 4],
+        }
+    }
+}
+
+crate::impl_associate_bytes_types!(Step);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    crate::test_to_bytes!(Step);
 }

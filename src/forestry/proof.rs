@@ -7,8 +7,7 @@ use proptest::{collection::vec, prelude::*};
 use crate::prelude::Hash;
 
 /// Represents a proof in the HashGraph.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Proof(Vec<Step>);
 
 impl Proof {
@@ -26,7 +25,7 @@ impl Proof {
     /// use mucrdt::forestry::Proof;
     ///
     /// let proof = Proof::new();
-    /// assert!(proof.is_empty());
+    /// prop_assert!(proof.is_empty());
     /// ```
     pub fn new() -> Self {
         Self::default()
@@ -289,8 +288,50 @@ impl Arbitrary for Proof {
     type Parameters = usize;
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(max_depth: Self::Parameters) -> Self::Strategy {
-        vec(any::<Step>(), 0..=max_depth).prop_map(Proof).boxed()
+    fn arbitrary_with(depth: Self::Parameters) -> Self::Strategy {
+        vec(any::<Step>(), 0..=depth).prop_map(Proof).boxed()
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_strategy::proptest;
+
+    #[proptest]
+    fn test_proof_push_and_pop(mut proof: Proof, step: Step) {
+        let original_len = proof.len();
+        proof.push(step.clone());
+
+        prop_assert_eq!(proof.len(), original_len + 1);
+        prop_assert_eq!(proof.last(), Some(&step));
+
+        let popped = proof.remove(proof.len() - 1);
+
+        prop_assert_eq!(popped, Some(step));
+        prop_assert_eq!(proof.len(), original_len);
+    }
+
+    #[proptest]
+    fn test_proof_extend_and_retain(mut proof: Proof, additional_steps: Vec<Step>) {
+        let original_len = proof.len();
+        proof.extend(additional_steps.clone());
+        prop_assert_eq!(proof.len(), original_len + additional_steps.len());
+
+        proof.retain(|step| matches!(step, Step::Leaf { .. }));
+        prop_assert!(proof.iter().all(|step| step.is_leaf()));
+    }
+
+    #[test]
+    fn test_empty_root() {
+        assert_eq!(Proof::new().root(), Hash::default());
+    }
+
+    #[proptest]
+    fn test_is_empty(step: Step) {
+        let mut proof = Proof::new();
+        prop_assert!(proof.is_empty());
+        proof.push(step);
+        prop_assert!(!proof.is_empty());
+    }
+}
