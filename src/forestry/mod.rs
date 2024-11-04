@@ -535,8 +535,7 @@ mod tests {
     macro_rules! generate_mpf_tests {
         ($digest:ty) => {
             paste::paste! {
-                #[allow(non_snake_case)]
-                mod [<$digest _tests>] {
+                mod [<$digest:snake _tests>] {
                     use super::*;
                     use $digest;
                     use proptest::collection::vec;

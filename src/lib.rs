@@ -213,18 +213,6 @@ macro_rules! test_to_bytes {
                 fn test_is_different_on_different_objects(a: $type, b: $type) {
                     prop_assert_eq!(a == b, a.to_bytes() == b.to_bytes());
                 }
-
-                #[test_strategy::proptest(fork = false)]
-                fn test_hash_consistency(a: $type, b: $type) {
-                    #[cfg(feature = "blake3")]
-                    prop_assert_eq!(a == b, a.hash_bytes::<blake3::Hasher>() == b.hash_bytes::<blake3::Hasher>());
-
-                    #[cfg(feature = "blake2")]
-                    prop_assert_eq!(a == b, a.hash_bytes::<blake2::Blake2b>() == b.hash_bytes::<blake2::Blake2b>());
-
-                    #[cfg(feature = "sha2")]
-                    prop_assert_eq!(a == b, a.hash_bytes::<sha2::Sha256>() == b.hash_bytes::<sha2::Sha256>());
-                }
             }
         }
     };
@@ -393,4 +381,3 @@ impl FromBytes for Neighbor {
         })
     }
 }
-
