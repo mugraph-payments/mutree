@@ -559,10 +559,14 @@ mod tests {
         };
     }
 
+    #[cfg(feature = "blake2")]
     type Blake2s = blake2::Blake2s256;
+    #[cfg(feature = "blake2")]
     generate_mpf_tests!(Blake2s);
 
+    #[cfg(feature = "blake2")]
     type Blake2b = blake2::Blake2b<U32>;
+    #[cfg(feature = "blake2")]
     generate_mpf_tests!(Blake2b);
 
     #[cfg(feature = "blake3")]

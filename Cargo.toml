@@ -13,10 +13,8 @@ proptest = "1.4.0"
 test-strategy = "0.4.0"
 thiserror = "1.0.61"
 
-# Default Hash Function
-blake2 = { version = "0.10.6" }
-
 # Hash Functions
+blake2 = { version = "0.10.6", optional = true }
 blake3 = { version = "1.5.4", features = [
   "serde",
   "traits-preview",
@@ -25,8 +23,18 @@ sha2 = { version = "0.10.8", optional = true }
 sha3 = { version = "0.10.8", optional = true }
 
 [features]
-default = ["blake3"]
-all_hashes = ["blake3", "sha2", "sha3"]
+default = []
+all_hashes = ["blake2", "blake3", "sha2", "sha3"]
 blake3 = ["dep:blake3"]
 sha2 = ["dep:sha2"]
 sha3 = ["dep:sha3"]
+
+[dev-dependencies]
+criterion = "0.5.1"
+rand = "0.8.5"
+rand_chacha = { version = "0.3.1", features = ["simd"] }
+
+[[bench]]
+name = "forestry"
+path = "benches/bench_forestry.rs"
+harness = false
