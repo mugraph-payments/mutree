@@ -82,6 +82,16 @@ pub trait ToBytes {
         let len = self.to_bytes().as_ref().len();
         self.to_bytes_vec() == vec![0; len]
     }
+
+    /// Provides mutable access to the bytes representation.
+    ///
+    /// This is an optional method that types can implement if they can
+    /// safely provide mutable access to their byte representation.
+    /// The default implementation panics.
+    #[inline]
+    fn to_bytes_mut(&mut self) -> &mut [u8] {
+        unimplemented!("to_bytes_mut is not implemented for this type")
+    }
 }
 
 pub trait FromHex
