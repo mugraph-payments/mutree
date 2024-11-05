@@ -4,32 +4,11 @@ use proptest::{array::uniform4, prelude::*};
 
 use crate::prelude::*;
 
-/// Represents a single step in a proof.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
-    /// A branch node in the trie.
-    Branch {
-        /// The number of common prefix nibbles to skip.
-        skip: usize,
-        /// The hash digests of the neighboring branches.
-        neighbors: [Hash; 4],
-    },
-    /// A fork node in the trie.
-    Fork {
-        /// The number of common prefix nibbles to skip.
-        skip: usize,
-        /// The neighboring node information.
-        neighbor: Neighbor,
-    },
-    /// A leaf node in the trie.
-    Leaf {
-        /// The number of common prefix nibbles to skip.
-        skip: usize,
-        /// The full key of the leaf.
-        key: Hash,
-        /// The value stored at the leaf.
-        value: Hash,
-    },
+    Branch { skip: usize, neighbors: [Hash; 4] },
+    Fork { skip: usize, neighbor: Neighbor },
+    Leaf { skip: usize, key: Hash, value: Hash },
 }
 
 impl Step {

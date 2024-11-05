@@ -35,8 +35,6 @@ use proptest::prelude::*;
 
 use crate::error::Result;
 
-#[doc(hidden)]
-/// This is a hidden module to make the macros defined on this crate available for the users.
 pub mod __dependencies {
     pub use paste;
     pub use proptest;
