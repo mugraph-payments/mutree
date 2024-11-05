@@ -146,6 +146,28 @@ impl<D: Digest> Forestry<D> {
         }
     }
 
+    /// Creates a new Forestry instance from a root hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `root` - The bytes of the root hash
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the new Forestry instance or an error
+    #[inline]
+    pub fn from_root(root: &[u8]) -> Result<Self> {
+        if root.len() != 32 {
+            return Err(Error::InvalidLength);
+        }
+
+        Ok(Self {
+            proof: Proof::new(),
+            root: Hash::from_slice(root),
+            _phantom: PhantomData,
+        })
+    }
+
     /// Constructs a new empty Forestry.
     ///
     /// This function creates an empty Forestry with no elements.
@@ -195,7 +217,16 @@ impl<D: Digest> Forestry<D> {
         }
         let key_hash = Hash::digest::<D>(key);
         let value_hash = Hash::digest::<D>(value);
-        self.verify_proof(key_hash, value_hash, &self.proof)
+
+        // Verify the proof contains the exact key-value pair
+        let contains_pair = self.proof.iter().any(|step| {
+            matches!(step, Step::Leaf { key: leaf_key, value: leaf_value, .. }
+                if *leaf_key == key_hash && *leaf_value == value_hash)
+        });
+
+        // Verify the root hash matches
+        let calculated_root = Self::calculate_root(&self.proof);
+        contains_pair && calculated_root == self.root
     }
 
     /// Inserts an element to the trie.
@@ -336,16 +367,27 @@ impl<D: Digest> Forestry<D> {
         for step in proof.iter() {
             match step {
                 Step::Branch { neighbors, .. } => {
-                    for neighbor in neighbors {
+                    // First hash the number of non-zero neighbors
+                    let non_zero = neighbors.iter().filter(|&&n| n != Hash::zero()).count();
+                    hasher.update(&[non_zero as u8]);
+                    // Then hash each non-zero neighbor in order
+                    for neighbor in neighbors.iter().filter(|&&n| n != Hash::zero()) {
                         hasher.update(neighbor.as_ref());
                     }
                 }
                 Step::Fork { neighbor, .. } => {
-                    hasher.update([neighbor.nibble]);
+                    // Hash fork marker
+                    hasher.update(&[0xFF]);
+                    // Hash nibble and prefix
+                    hasher.update(&[neighbor.nibble]);
                     hasher.update(&neighbor.prefix);
+                    // Hash root
                     hasher.update(neighbor.root.as_ref());
                 }
                 Step::Leaf { key, value, .. } => {
+                    // Hash leaf marker
+                    hasher.update(&[0x00]);
+                    // Hash key and value
                     hasher.update(key.as_ref());
                     hasher.update(value.as_ref());
                 }
@@ -429,7 +471,7 @@ impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
     }
 }
 
-#[cfg(all(test, any(feature = "blake3", feature = "blake2", feature = "sha2")))]
+#[cfg(all(test, any(feature = "blake3", feature = "sha2")))]
 mod tests {
     use super::*;
 
@@ -698,14 +740,12 @@ mod tests {
 
     #[cfg(feature = "blake3")]
     type Blake3 = blake3::Hasher;
-    #[cfg(feature = "blake2")]
     type Blake2s = blake2::Blake2s256;
     #[cfg(feature = "sha2")]
     type Sha256 = sha2::Sha256;
 
     #[cfg(feature = "blake3")]
     generate_mpf_tests!(Blake3);
-    #[cfg(feature = "blake2")]
     generate_mpf_tests!(Blake2s);
     #[cfg(feature = "sha2")]
     generate_mpf_tests!(Sha256);
