@@ -12,12 +12,14 @@ use crate::prelude::*;
 pub struct Hash([u8; 32]);
 
 impl Display for Hash {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", hex::encode(self.0))
     }
 }
 
 impl std::fmt::Debug for Hash {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", hex::encode(self.0))
     }
@@ -27,10 +29,12 @@ impl Arbitrary for Hash {
     type Parameters = [u8; 32];
     type Strategy = BoxedStrategy<Self>;
 
+    #[inline]
     fn arbitrary_with(inner: Self::Parameters) -> Self::Strategy {
         Just(inner).prop_map(Hash::new).boxed()
     }
 
+    #[inline]
     fn arbitrary() -> Self::Strategy {
         any::<[u8; 32]>().prop_map(Hash::new).boxed()
     }
@@ -38,10 +42,12 @@ impl Arbitrary for Hash {
 
 impl Hash {
     /// Creates a new Hash from any type that can be converted into [u8; 32].
+    #[inline]
     pub fn new<T: Into<[u8; 32]>>(data: T) -> Self {
         Hash(data.into())
     }
 
+    #[inline]
     pub fn from_slice(slice: &[u8]) -> Self {
         let mut inner = [0u8; 32];
         inner.copy_from_slice(slice);
@@ -49,16 +55,19 @@ impl Hash {
     }
 
     /// Returns a zero hash (all bytes set to 0).
+    #[inline]
     pub const fn zero() -> Self {
         Self([0u8; 32])
     }
 
+    #[inline]
     pub fn digest<D: Digest>(data: &[u8]) -> Self {
         let mut hasher = D::new();
         hasher.update(data);
         Hash::from_slice(&hasher.finalize())
     }
 
+    #[inline]
     pub fn combine<D: Digest>(left: &Hash, right: &Hash) -> Self {
         let mut hasher = D::new();
         hasher.update(left.as_ref());
@@ -68,36 +77,42 @@ impl Hash {
 }
 
 impl Default for Hash {
+    #[inline]
     fn default() -> Self {
         Hash::zero()
     }
 }
 
 impl From<[u8; 32]> for Hash {
+    #[inline]
     fn from(array: [u8; 32]) -> Self {
         Hash(array)
     }
 }
 
 impl AsRef<[u8]> for Hash {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
 impl AsMut<[u8]> for Hash {
+    #[inline]
     fn as_mut(&mut self) -> &mut [u8] {
         self.0.as_mut()
     }
 }
 
 impl From<Hash> for [u8; 32] {
+    #[inline]
     fn from(val: Hash) -> Self {
         val.0
     }
 }
 
 impl FromBytes for Hash {
+    #[inline]
     fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != 32 {
             return Err(Error::InvalidLength);
@@ -111,6 +126,7 @@ impl FromBytes for Hash {
 impl ToBytes for Hash {
     type Output = [u8; 32];
 
+    #[inline]
     fn to_bytes(&self) -> Self::Output {
         self.0
     }
@@ -125,4 +141,3 @@ mod tests {
     crate::test_to_bytes!(Hash);
     crate::test_to_hex!(Hash);
 }
-

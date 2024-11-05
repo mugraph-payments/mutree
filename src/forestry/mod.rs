@@ -1,3 +1,5 @@
+#![allow(clippy::doc_lazy_continuation)]
+
 /// Merkle Patricia Forestry (MPF): An Advanced Key-Value Data Structure
 ///
 /// This implementation is based on the one done by Matthias Benkort on the
@@ -108,11 +110,11 @@ use proptest::prelude::*;
 
 use crate::prelude::*;
 
+mod neighbor;
 mod proof;
 mod step;
 
-pub use proof::Proof;
-pub use step::Step;
+pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 
 /// Represents a Merkle Patricia Forestry
 pub struct Forestry<D: Digest> {
@@ -134,6 +136,7 @@ impl<D: Digest> Forestry<D> {
     /// # Returns
     ///
     /// A new instance of Forestry.
+    #[inline]
     pub fn from_proof(proof: Proof) -> Self {
         let root = Self::calculate_root(&proof);
         Self {
@@ -151,6 +154,7 @@ impl<D: Digest> Forestry<D> {
     /// # Returns
     ///
     /// A new empty instance of Forestry.
+    #[inline]
     pub fn empty() -> Self {
         Self {
             proof: Proof::new(),
@@ -166,6 +170,7 @@ impl<D: Digest> Forestry<D> {
     /// # Returns
     ///
     /// `true` if the Forestry is empty, `false` otherwise.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.proof.is_empty()
     }
@@ -183,6 +188,7 @@ impl<D: Digest> Forestry<D> {
     /// # Returns
     ///
     /// `true` if the key-value pair is present in the trie and not deleted, `false` otherwise.
+    #[inline]
     pub fn verify(&self, key: &[u8], value: &[u8]) -> bool {
         if self.is_empty() {
             return false;
@@ -205,6 +211,7 @@ impl<D: Digest> Forestry<D> {
     /// # Returns
     ///
     /// A Result containing the hash of the inserted leaf or an Error if the operation fails.
+    #[inline]
     pub fn insert(&mut self, key: &[u8], value: &[u8]) -> Result<Hash, Error> {
         if key.is_empty() {
             return Err(Error::EmptyKeyOrValue);
@@ -233,6 +240,7 @@ impl<D: Digest> Forestry<D> {
     /// # Returns
     ///
     /// `true` if the key-value pair is present in the proof and not deleted, `false` otherwise.
+    #[inline]
     pub fn verify_proof(&self, key: Hash, value: Hash, proof: &Proof) -> bool {
         if proof.is_empty() {
             return false;
@@ -348,6 +356,7 @@ impl<D: Digest> Forestry<D> {
 }
 
 impl<D: Digest> Clone for Forestry<D> {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             proof: self.proof.clone(),
@@ -358,6 +367,7 @@ impl<D: Digest> Clone for Forestry<D> {
 }
 
 impl<D: Digest> PartialEq for Forestry<D> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root
     }
@@ -366,6 +376,7 @@ impl<D: Digest> PartialEq for Forestry<D> {
 impl<D: Digest> Eq for Forestry<D> {}
 
 impl<D: Digest> std::fmt::Debug for Forestry<D> {
+    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Forestry")
             .field("proof", &self.proof)
@@ -375,6 +386,7 @@ impl<D: Digest> std::fmt::Debug for Forestry<D> {
 }
 
 impl<D: Digest> Default for Forestry<D> {
+    #[inline]
     fn default() -> Self {
         Self::empty()
     }
@@ -384,6 +396,7 @@ impl<D: Digest + 'static> Arbitrary for Forestry<D> {
     type Parameters = ();
     type Strategy = BoxedStrategy<Self>;
 
+    #[inline]
     fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
         any::<Proof>()
             .prop_map(|proof| Self::from_proof(proof))
@@ -392,6 +405,7 @@ impl<D: Digest + 'static> Arbitrary for Forestry<D> {
 }
 
 impl<D: Digest + 'static> CvRDT for Forestry<D> {
+    #[inline]
     fn merge(&mut self, other: &Self) -> Result<()> {
         let mut merged_proof = self.proof.clone();
         for step in other.proof.iter() {
@@ -408,64 +422,10 @@ impl<D: Digest + 'static> CvRDT for Forestry<D> {
 }
 
 impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
+    #[inline]
     fn apply(&mut self, op: &Proof) -> Result<()> {
         let mpf = Self::from_proof(op.clone());
         self.merge(&mpf)
-    }
-}
-
-/// Represents a neighboring node in a fork step of a proof.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
-pub struct Neighbor {
-    /// The nibble (4-bit value) of the neighbor.
-    pub nibble: u8,
-    /// The remaining prefix of the neighbor's key.
-    pub prefix: Vec<u8>,
-    /// The hash digest of the neighbor's subtree.
-    pub root: Hash,
-}
-
-impl Arbitrary for Neighbor {
-    type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
-
-    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-        (any::<u8>(), any::<Vec<u8>>(), any::<Hash>())
-            .prop_map(|(nibble, prefix, root)| Neighbor {
-                nibble,
-                prefix,
-                root,
-            })
-            .boxed()
-    }
-}
-
-impl ToBytes for Neighbor {
-    type Output = Vec<u8>;
-
-    fn to_bytes(&self) -> Self::Output {
-        let mut bytes = vec![self.nibble];
-        bytes.extend_from_slice(&self.prefix);
-        bytes.extend_from_slice(self.root.as_ref());
-        bytes
-    }
-}
-
-impl FromBytes for Neighbor {
-    fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() < 33 {
-            return Err(Error::Deserialization(
-                "Invalid length for Neighbor".to_string(),
-            ));
-        }
-        let nibble = bytes[0];
-        let prefix = bytes[1..bytes.len() - 32].to_vec();
-        let root = Hash::from_slice(&bytes[bytes.len() - 32..]);
-        Ok(Neighbor {
-            nibble,
-            prefix,
-            root,
-        })
     }
 }
 

@@ -1,4 +1,10 @@
 #![feature(coverage_attribute)]
+#![deny(
+    clippy::correctness,
+    clippy::complexity,
+    clippy::perf,
+    clippy::missing_inline_in_public_items
+)]
 
 mod error;
 
@@ -30,6 +36,7 @@ pub mod __dependencies {
     pub use proptest;
     pub use test_strategy;
 }
+
 pub trait CvRDT: Sized + Arbitrary + Default + Clone + PartialEq {
     fn merge(&mut self, other: &Self) -> Result<()>;
 }
@@ -54,6 +61,7 @@ pub trait ToBytes {
     /// Converts the value to a representation in bytes, as a vector.
     ///
     /// This is a convenience method, and automatically derived from `to_bytes`.
+    #[inline]
     fn to_bytes_vec(&self) -> Vec<u8> {
         self.to_bytes().as_ref().to_vec()
     }
@@ -61,6 +69,7 @@ pub trait ToBytes {
     /// Hashes the value using the specified Digest algorithm.
     ///
     /// This is a convenience method, and automatically derived from `to_bytes`.
+    #[inline]
     fn hash_bytes<D: Digest>(&self) -> crate::hash::Hash {
         crate::hash::Hash::digest::<D>(self.to_bytes().as_ref())
     }
@@ -68,6 +77,7 @@ pub trait ToBytes {
     /// Checks if the value (as bytes) is zero.
     ///
     /// This is useful for checking if a value is empty.
+    #[inline]
     fn is_zero(&self) -> bool {
         let len = self.to_bytes().as_ref().len();
         self.to_bytes_vec() == vec![0; len]
@@ -89,12 +99,14 @@ pub trait ToHex {
 macro_rules! impl_associate_bytes_types {
     ($type:ty) => {
         impl std::hash::Hash for $type {
+            #[inline]
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
                 self.to_bytes().hash(state);
             }
         }
 
         impl $crate::prelude::FromHex for $type {
+            #[inline]
             fn from_hex(input: &str) -> Result<Self> {
                 let bytes = hex::decode(input)?;
                 Self::from_bytes(&bytes)
@@ -102,18 +114,21 @@ macro_rules! impl_associate_bytes_types {
         }
 
         impl $crate::prelude::ToHex for $type {
+            #[inline]
             fn to_hex(&self) -> String {
                 hex::encode(&ToBytes::to_bytes(self))
             }
         }
 
         impl std::fmt::LowerHex for $type {
+            #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{}", hex::encode(self.to_bytes()))
             }
         }
 
         impl std::fmt::UpperHex for $type {
+            #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{}", hex::encode_upper(self.to_bytes()))
             }

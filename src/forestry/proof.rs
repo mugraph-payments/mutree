@@ -27,6 +27,7 @@ impl Proof {
     /// let proof = Proof::new();
     /// prop_assert!(proof.is_empty());
     /// ```
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
@@ -45,6 +46,7 @@ impl Proof {
     /// let proof = Proof::new();
     /// let steps: &[Step] = proof.steps();
     /// ```
+    #[inline]
     pub fn steps(&self) -> &[Step] {
         &self.0
     }
@@ -64,6 +66,7 @@ impl Proof {
     /// let proof = Proof::new();
     /// let root_hash: Hash = proof.root();
     /// ```
+    #[inline]
     pub fn root(&self) -> Hash {
         if self.is_empty() {
             return Hash::default();
@@ -94,6 +97,7 @@ impl Proof {
     /// let proof = Proof::new();
     /// let step: Option<&Step> = proof.get(0);
     /// ```
+    #[inline]
     pub fn get(&self, index: usize) -> Option<&Step> {
         self.0.get(index)
     }
@@ -115,6 +119,7 @@ impl Proof {
     ///     _ => false,
     /// });
     /// ```
+    #[inline]
     pub fn retain<F>(&mut self, f: F)
     where
         F: FnMut(&Step) -> bool,
@@ -140,6 +145,7 @@ impl Proof {
     /// let mut proof = Proof::new();
     /// let removed_step: Option<Step> = proof.remove(0);
     /// ```
+    #[inline]
     pub fn remove(&mut self, index: usize) -> Option<Step> {
         if index < self.0.len() {
             Some(self.0.remove(index))
@@ -162,6 +168,7 @@ impl Proof {
     /// let mut proof = Proof::new();
     /// proof.push(Step::Leaf { key: vec![], value: Hash::default() });
     /// ```
+    #[inline]
     pub fn push(&mut self, step: Step) {
         self.0.push(step);
     }
@@ -181,6 +188,7 @@ impl Proof {
     /// let steps = vec![Step::Leaf { key: vec![], value: Hash::default() }];
     /// proof.extend(steps);
     /// ```
+    #[inline]
     pub fn extend<I: IntoIterator<Item = Step>>(&mut self, iter: I) {
         self.0.extend(iter);
     }
@@ -205,6 +213,7 @@ impl Proof {
     /// proof.push(Step::Leaf { key: vec![], value: Hash::default() });
     /// proof.set(0, Step::Leaf { key: vec![1], value: Hash::default() });
     /// ```
+    #[inline]
     pub fn set(&mut self, index: usize, step: Step) {
         self.0[index] = step;
     }
@@ -213,24 +222,28 @@ impl Proof {
 impl Deref for Proof {
     type Target = [Step];
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl DerefMut for Proof {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
 impl From<Vec<Step>> for Proof {
+    #[inline(always)]
     fn from(steps: Vec<Step>) -> Self {
         Proof(steps)
     }
 }
 
 impl From<Proof> for Vec<Step> {
+    #[inline(always)]
     fn from(proof: Proof) -> Self {
         proof.0
     }
@@ -240,6 +253,7 @@ impl IntoIterator for Proof {
     type Item = Step;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
@@ -249,6 +263,7 @@ impl<'a> IntoIterator for &'a Proof {
     type Item = &'a Step;
     type IntoIter = std::slice::Iter<'a, Step>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -258,12 +273,14 @@ impl<'a> IntoIterator for &'a mut Proof {
     type Item = &'a mut Step;
     type IntoIter = std::slice::IterMut<'a, Step>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }
 }
 
 impl PartialOrd for Proof {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         // Compare the lengths of the proof vectors first
         match self.len().partial_cmp(&other.len()) {
@@ -288,6 +305,7 @@ impl Arbitrary for Proof {
     type Parameters = usize;
     type Strategy = BoxedStrategy<Self>;
 
+    #[inline]
     fn arbitrary_with(depth: Self::Parameters) -> Self::Strategy {
         vec(any::<Step>(), 0..=depth).prop_map(Proof).boxed()
     }

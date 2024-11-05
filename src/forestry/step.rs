@@ -33,14 +33,17 @@ pub enum Step {
 }
 
 impl Step {
+    #[inline(always)]
     pub fn is_leaf(&self) -> bool {
         matches!(self, Self::Leaf { .. })
     }
 
+    #[inline(always)]
     pub fn is_branch(&self) -> bool {
         matches!(self, Self::Branch { .. })
     }
 
+    #[inline(always)]
     pub fn is_fork(&self) -> bool {
         matches!(self, Self::Fork { .. })
     }
@@ -49,6 +52,7 @@ impl Step {
 impl ToBytes for Step {
     type Output = Vec<u8>;
 
+    #[inline]
     fn to_bytes(&self) -> Self::Output {
         match self {
             Step::Branch { skip, neighbors } => {
@@ -77,6 +81,7 @@ impl ToBytes for Step {
 }
 
 impl FromBytes for Step {
+    #[inline]
     fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.is_empty() {
             return Err(Error::Deserialization("Empty input".to_string()));
@@ -147,6 +152,7 @@ impl Arbitrary for Step {
     type Parameters = ();
     type Strategy = BoxedStrategy<Self>;
 
+    #[inline]
     fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
         prop_oneof![
             (any::<usize>(), uniform4(any::<Hash>()))
@@ -161,6 +167,7 @@ impl Arbitrary for Step {
 }
 
 impl PartialOrd for Step {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
             (
@@ -217,6 +224,7 @@ impl PartialOrd for Step {
 }
 
 impl Default for Step {
+    #[inline]
     fn default() -> Self {
         Step::Branch {
             skip: 0,

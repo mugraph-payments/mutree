@@ -1,7 +1,7 @@
 use crate::{error::Error, error::Result, hash::Hash};
-use digest::Digest;
-use proptest::prelude::*;
 use test_strategy::Arbitrary;
+
+use super::{FromBytes, ToBytes};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Arbitrary)]
 pub struct Neighbor {
@@ -16,6 +16,7 @@ pub struct Neighbor {
 impl ToBytes for Neighbor {
     type Output = Vec<u8>;
 
+    #[inline]
     fn to_bytes(&self) -> Self::Output {
         let mut bytes = vec![self.nibble];
         bytes.extend_from_slice(&self.prefix);
@@ -25,6 +26,7 @@ impl ToBytes for Neighbor {
 }
 
 impl FromBytes for Neighbor {
+    #[inline]
     fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() < 33 {
             return Err(Error::Deserialization(
