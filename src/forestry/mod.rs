@@ -474,6 +474,7 @@ impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
 #[cfg(all(test, any(feature = "blake3", feature = "sha2")))]
 mod tests {
     use digest::consts::U32;
+    use std::cmp::Ordering;
     use test_strategy::proptest;
 
     use super::*;
@@ -753,20 +754,25 @@ mod tests {
     generate_mpf_tests!(Blake3);
 
     #[cfg(feature = "sha2")]
-    type Sha256 = sha2::Sha256;
+    type Sha2_256 = sha2::Sha256;
     #[cfg(feature = "sha2")]
-    generate_mpf_tests!(Sha256);
+    generate_mpf_tests!(Sha2_256);
+
+    #[cfg(feature = "sha3")]
+    type Sha3_256 = sha3::Sha3_256;
+    #[cfg(feature = "sha3")]
+    generate_mpf_tests!(Sha3_256);
 
     #[proptest]
     fn test_merkle_proof_reflexive(proof: Proof) {
-        prop_assert_eq!(proof.partial_cmp(&proof), Some(std::cmp::Ordering::Equal));
+        prop_assert_eq!(proof.partial_cmp(&proof), Some(Ordering::Equal));
     }
 
     #[proptest]
     fn test_merkle_proof_antisymmetric(proof1: Proof, proof2: Proof) {
         if proof1 == proof2 {
-            prop_assert_eq!(proof1.partial_cmp(&proof2), Some(std::cmp::Ordering::Equal));
-            prop_assert_eq!(proof2.partial_cmp(&proof1), Some(std::cmp::Ordering::Equal));
+            prop_assert_eq!(proof1.partial_cmp(&proof2), Some(Ordering::Equal));
+            prop_assert_eq!(proof2.partial_cmp(&proof1), Some(Ordering::Equal));
         } else if let (Some(ord1), Some(ord2)) =
             (proof1.partial_cmp(&proof2), proof2.partial_cmp(&proof1))
         {
@@ -790,9 +796,9 @@ mod tests {
         let cmp2 = proof2.partial_cmp(&proof1);
 
         match (cmp1, cmp2) {
-            (Some(std::cmp::Ordering::Less), Some(std::cmp::Ordering::Greater))
-            | (Some(std::cmp::Ordering::Greater), Some(std::cmp::Ordering::Less))
-            | (Some(std::cmp::Ordering::Equal), Some(std::cmp::Ordering::Equal)) => {}
+            (Some(Ordering::Less), Some(Ordering::Greater))
+            | (Some(Ordering::Greater), Some(Ordering::Less))
+            | (Some(Ordering::Equal), Some(Ordering::Equal)) => {}
             (None, None) => {}
             _ => prop_assert!(false, "Inconsistent comparison: {:?} vs {:?}", cmp1, cmp2),
         }
