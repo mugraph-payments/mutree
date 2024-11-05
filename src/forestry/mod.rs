@@ -13,7 +13,6 @@ mod step;
 
 pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 
-/// Represents a Merkle Patricia Forestry
 pub struct Forestry<D: Digest> {
     pub proof: Proof,
     pub root: Hash,
@@ -22,17 +21,6 @@ pub struct Forestry<D: Digest> {
 
 impl<D: Digest> Forestry<D> {
     /// Constructs a new Forestry from its proof.
-    ///
-    /// This function takes a Proof and creates a new Forestry instance.
-    /// It calculates the root hash from the provided proof and initializes the structure.
-    ///
-    /// # Arguments
-    ///
-    /// * `proof` - A Proof representing the state of the Merkle Patricia Forestry.
-    ///
-    /// # Returns
-    ///
-    /// A new instance of Forestry.
     #[inline]
     pub fn from_proof(proof: Proof) -> Self {
         let root = Self::calculate_root(&proof);
@@ -43,15 +31,6 @@ impl<D: Digest> Forestry<D> {
         }
     }
 
-    /// Creates a new Forestry instance from a root hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `root` - The bytes of the root hash
-    ///
-    /// # Returns
-    ///
-    /// A Result containing the new Forestry instance or an error
     #[inline]
     pub fn from_root(root: &[u8]) -> Result<Self> {
         if root.len() != 32 {
@@ -66,13 +45,6 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Constructs a new empty Forestry.
-    ///
-    /// This function creates an empty Forestry with no elements.
-    /// The proof is an empty vector and the root is set to the zero hash.
-    ///
-    /// # Returns
-    ///
-    /// A new empty instance of Forestry.
     #[inline]
     pub fn empty() -> Self {
         Self {
@@ -83,30 +55,12 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Checks if the Forestry is empty.
-    ///
-    /// This function determines whether the Forestry contains any elements.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the Forestry is empty, `false` otherwise.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.proof.is_empty()
     }
 
     /// Verifies if an element is present in the trie with a specific value.
-    ///
-    /// This function checks whether a given key-value pair exists in the Forestry
-    /// and is not marked as deleted.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - A byte slice representing the key to verify.
-    /// * `value` - A byte slice representing the value to verify.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the key-value pair is present in the trie and not deleted, `false` otherwise.
     #[inline]
     pub fn verify(&self, key: &[u8], value: &[u8]) -> bool {
         if self.is_empty() {
@@ -127,18 +81,6 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Inserts an element to the trie.
-    ///
-    /// This function adds a new key-value pair to the Forestry.
-    /// It updates the proof and recalculates the root hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - A byte slice representing the key to insert.
-    /// * `value` - A byte slice representing the value to insert.
-    ///
-    /// # Returns
-    ///
-    /// A Result containing the hash of the inserted leaf or an Error if the operation fails.
     #[inline]
     pub fn insert(&mut self, key: &[u8], value: &[u8]) -> Result<Hash, Error> {
         if key.is_empty() {
@@ -155,19 +97,6 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Verifies a proof for a given key and value.
-    ///
-    /// This function checks if a given key-value pair exists in the provided proof
-    /// and is not marked as deleted.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - The Hash of the key to verify.
-    /// * `value` - The Hash of the value to verify.
-    /// * `proof` - A reference to the Proof to check against.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the key-value pair is present in the proof and not deleted, `false` otherwise.
     #[inline]
     pub fn verify_proof(&self, key: Hash, value: Hash, proof: &Proof) -> bool {
         if proof.is_empty() {
@@ -180,18 +109,6 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Inserts a key-value pair into the proof.
-    ///
-    /// This function creates a new proof by adding the given key-value pair
-    /// and removing any existing leaf with the same key. It also applies path compression.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - The Hash of the key to insert.
-    /// * `value` - The Hash of the value to insert.
-    ///
-    /// # Returns
-    ///
-    /// A new Proof containing the inserted key-value pair with path compression applied.
     fn insert_to_proof(&self, key: Hash, value: Hash) -> Proof {
         let mut new_proof = self.proof.clone();
         // Remove any existing leaf with the same key
@@ -207,13 +124,6 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Applies path compression to the proof.
-    ///
-    /// This function merges nodes with single children into their parents,
-    /// reducing the overall number of nodes in the trie.
-    ///
-    /// # Arguments
-    ///
-    /// * `proof` - A mutable reference to the Proof to compress.
     fn compress_path(proof: &mut Proof) {
         let mut i = 0;
         while i < proof.len() - 1 {
@@ -249,16 +159,6 @@ impl<D: Digest> Forestry<D> {
     }
 
     /// Calculates the root hash of the Merkle Patricia Forestry.
-    ///
-    /// This function computes the root hash based on the provided proof.
-    ///
-    /// # Arguments
-    ///
-    /// * `proof` - A reference to the Proof to calculate the root from.
-    ///
-    /// # Returns
-    ///
-    /// The calculated root Hash of the Merkle Patricia Forestry.
     fn calculate_root(proof: &Proof) -> Hash {
         let mut hasher = D::new();
         for step in proof.iter() {

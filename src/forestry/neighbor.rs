@@ -8,11 +8,8 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Arbitrary)]
 pub struct Neighbor {
-    /// The nibble (4-bit value) of the neighbor.
     pub nibble: u8,
-    /// The remaining prefix of the neighbor's key.
     pub prefix: Vec<u8>,
-    /// The hash digest of the neighbor's subtree.
     pub root: Hash,
 }
 

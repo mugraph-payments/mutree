@@ -40,7 +40,6 @@ impl Arbitrary for Hash {
 }
 
 impl Hash {
-    /// Creates a new Hash from any type that can be converted into [u8; 32].
     #[inline]
     pub fn new<T: Into<[u8; 32]>>(data: T) -> Self {
         Hash(data.into())
@@ -53,7 +52,6 @@ impl Hash {
         Hash(inner)
     }
 
-    /// Returns a zero hash (all bytes set to 0).
     #[inline]
     pub const fn zero() -> Self {
         Self([0u8; 32])

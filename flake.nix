@@ -54,6 +54,7 @@
             cargo-watch
             cargo-machete
             cargo-tarpaulin
+            cargo-mutants
           ];
         };
       }

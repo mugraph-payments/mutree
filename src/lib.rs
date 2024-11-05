@@ -70,7 +70,6 @@ pub trait ToBytes {
         self.to_bytes().as_ref().to_vec()
     }
 
-    /// Hashes the value using the specified Digest algorithm.
     ///
     /// This is a convenience method, and automatically derived from `to_bytes`.
     #[inline]
@@ -78,7 +77,6 @@ pub trait ToBytes {
         crate::hash::Hash::digest::<D>(self.to_bytes().as_ref())
     }
 
-    /// Checks if the value (as bytes) is zero.
     ///
     /// This is useful for checking if a value is empty.
     #[inline]

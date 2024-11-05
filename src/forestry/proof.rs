@@ -8,66 +8,20 @@ use proptest::{collection::vec, prelude::*};
 use super::Step;
 use crate::prelude::Hash;
 
-/// Represents a proof in the HashGraph.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Proof(Vec<Step>);
 
 impl Proof {
-    /// Creates a new, empty `Proof`.
-    ///
-    /// This method is equivalent to calling `Proof::default()`.
-    ///
-    /// # Returns
-    ///
-    /// A new `Proof` instance with no steps.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::Proof;
-    ///
-    /// let proof = Proof::new();
-    /// prop_assert!(proof.is_empty());
-    /// ```
     #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Returns a reference to the steps in the proof.
-    ///
-    /// # Returns
-    ///
-    /// A slice containing all the steps in the proof.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let proof = Proof::new();
-    /// let steps: &[Step] = proof.steps();
-    /// ```
     #[inline]
     pub fn steps(&self) -> &[Step] {
         &self.0
     }
 
-    /// Returns the root hash of the proof.
-    ///
-    /// # Returns
-    ///
-    /// - If the proof is empty, returns the default hash.
-    /// - Otherwise, returns the hash of the last step in the proof.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::{ forestry::Proof, prelude::Hash };
-    ///
-    /// let proof = Proof::new();
-    /// let root_hash: Hash = proof.root();
-    /// ```
     #[inline]
     pub fn root(&self) -> Hash {
         if self.is_empty() {
@@ -81,46 +35,11 @@ impl Proof {
         }
     }
 
-    /// Returns a reference to the step at the given index.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The index of the step to retrieve.
-    ///
-    /// # Returns
-    ///
-    /// An `Option` containing a reference to the `Step` at the given index, or `None` if the index is out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let proof = Proof::new();
-    /// let step: Option<&Step> = proof.get(0);
-    /// ```
     #[inline]
     pub fn get(&self, index: usize) -> Option<&Step> {
         self.0.get(index)
     }
 
-    /// Retains only the elements specified by the predicate.
-    ///
-    /// # Arguments
-    ///
-    /// * `f` - The predicate function that returns `true` for elements to retain and `false` for elements to remove.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let mut proof = Proof::new();
-    /// proof.retain(|step| match step {
-    ///     Step::Leaf { .. } => true,
-    ///     _ => false,
-    /// });
-    /// ```
     #[inline]
     pub fn retain<F>(&mut self, f: F)
     where
@@ -129,24 +48,6 @@ impl Proof {
         self.0.retain(f);
     }
 
-    /// Removes and returns the step at the specified index.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The index of the step to remove.
-    ///
-    /// # Returns
-    ///
-    /// The removed `Step` if the index is in bounds, or `None` if it is out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let mut proof = Proof::new();
-    /// let removed_step: Option<Step> = proof.remove(0);
-    /// ```
     #[inline]
     pub fn remove(&mut self, index: usize) -> Option<Step> {
         if index < self.0.len() {
@@ -156,65 +57,16 @@ impl Proof {
         }
     }
 
-    /// Appends a step to the end of the proof.
-    ///
-    /// # Arguments
-    ///
-    /// * `step` - The `Step` to append to the proof.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let mut proof = Proof::new();
-    /// proof.push(Step::Leaf { key: vec![], value: Hash::default() });
-    /// ```
     #[inline]
     pub fn push(&mut self, step: Step) {
         self.0.push(step);
     }
 
-    /// Extends the proof with the contents of an iterator.
-    ///
-    /// # Arguments
-    ///
-    /// * `iter` - An iterator that yields `Step`s to be appended to the proof.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let mut proof = Proof::new();
-    /// let steps = vec![Step::Leaf { key: vec![], value: Hash::default() }];
-    /// proof.extend(steps);
-    /// ```
     #[inline]
     pub fn extend<I: IntoIterator<Item = Step>>(&mut self, iter: I) {
         self.0.extend(iter);
     }
 
-    /// Sets the step at the specified index to a new value.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - The index of the step to set.
-    /// * `step` - The new `Step` to set at the specified index.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the index is out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mucrdt::prelude::{Proof, Step};
-    ///
-    /// let mut proof = Proof::new();
-    /// proof.push(Step::Leaf { key: vec![], value: Hash::default() });
-    /// proof.set(0, Step::Leaf { key: vec![1], value: Hash::default() });
-    /// ```
     #[inline]
     pub fn set(&mut self, index: usize, step: Step) {
         self.0[index] = step;
