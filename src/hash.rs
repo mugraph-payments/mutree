@@ -163,7 +163,7 @@ impl FromHex for Hash {
 impl ToHex for Hash {
     #[inline]
     fn to_hex(&self) -> String {
-        hex::encode(&ToBytes::to_bytes(self))
+        hex::encode(ToBytes::to_bytes(self))
     }
 }
 

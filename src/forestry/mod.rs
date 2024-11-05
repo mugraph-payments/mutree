@@ -412,8 +412,8 @@ mod tests {
 
                     #[proptest]
                     fn test_root_proof_equality(
-                        #[strategy(any::<Forestry<$digest>>())] trie1: Forestry<$digest>,
-                        #[strategy(any::<Forestry<$digest>>())] trie2: Forestry<$digest>
+                        trie1: Forestry<$digest>,
+                        trie2: Forestry<$digest>
                     ) {
                         prop_assert_eq!(
                             trie1.root == trie2.root,
@@ -424,21 +424,21 @@ mod tests {
 
                     #[proptest]
                     fn test_default_is_empty(
-                        #[strategy(Just(Forestry::<$digest>::default()))] default_trie: Forestry<$digest>
+                        default_trie: Forestry<$digest>
                     ) {
                         prop_assert!(default_trie.is_empty(), "Default instance should be empty");
                     }
 
                     #[proptest]
                     fn test_root_matches_calculated(
-                        #[strategy(any::<Forestry<$digest>>())] trie: Forestry<$digest>
+                        trie: Forestry<$digest>
                     ) {
                         let calculated_root = Forestry::<$digest>::calculate_root(&trie.proof);
                         prop_assert_eq!(trie.root, calculated_root, "Root should match calculated root");
                     }
 
                     #[proptest]
-                    fn test_from_proof_root_calculation(#[strategy(any::<Proof>())] proof: Proof) {
+                    fn test_from_proof_root_calculation(proof: Proof) {
                         let trie = Forestry::<$digest>::from_proof(proof.clone());
                         let calculated_root = Forestry::<$digest>::calculate_root(&proof);
                         prop_assert_eq!(trie.root, calculated_root, "Root should match calculated root after from_proof");
@@ -446,7 +446,7 @@ mod tests {
 
                     #[proptest]
                     fn test_verify_non_existent(
-                        #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
+                        mut trie: Forestry<$digest>,
                         #[strategy(non_empty_string())] key1: String,
                         value1: String,
                         #[strategy(non_empty_string())] key2: String,

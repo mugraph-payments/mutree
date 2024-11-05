@@ -230,7 +230,7 @@ impl FromHex for Step {
 impl ToHex for Step {
     #[inline]
     fn to_hex(&self) -> String {
-        hex::encode(&ToBytes::to_bytes(self))
+        hex::encode(ToBytes::to_bytes(self))
     }
 }
 
