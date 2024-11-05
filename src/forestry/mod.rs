@@ -81,14 +81,13 @@
 /// 3. CPU and memory-efficient operations
 /// 4. Balanced approach to proof size and computational overhead
 /// 5. Compatibility with byte-oriented systems while maintaining nibble-based trie efficiency
-/// 6. Support for logical deletions through tombstones
 /// 7. Improved space efficiency through path compression
 ///
 /// ## Limitations
 ///
-/// This MPF implementation supports insertions and logical deletions (via tombstones),
-/// but not updates. This design choice ensures data structure integrity while allowing
-/// for removals.
+/// This MPF implementation only supports insertions, not updates or deletions.
+/// This design choice ensures data structure integrity by making it an append-only
+/// data structure.
 ///
 /// ## Use Cases
 ///
@@ -96,7 +95,7 @@
 ///
 /// - Efficient membership proofs
 /// - Limited storage space for proofs
-/// - Append-only data structures with support for logical deletions
+/// - Append-only data structures
 /// - Cryptographic primitive compatibility
 /// - Balance between proof size and computational overhead
 ///
@@ -220,32 +219,6 @@ impl<D: Digest> Forestry<D> {
         Ok(value_hash)
     }
 
-    /// Removes an element from the trie.
-    ///
-    /// This function marks a key-value pair as deleted in the Forestry.
-    /// It updates the proof and recalculates the root hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - A byte slice representing the key to remove.
-    ///
-    /// # Returns
-    ///
-    /// A Result indicating success or an Error if the operation fails.
-    pub fn remove(&mut self, key: &[u8]) -> Result<(), Error> {
-        if key.is_empty() {
-            return Err(Error::EmptyKeyOrValue);
-        }
-
-        let key_hash = Hash::digest::<D>(key);
-
-        // Instead of removing the leaf, we'll mark it as deleted
-        self.proof = self.mark_as_deleted(key_hash);
-        self.root = Self::calculate_root(&self.proof);
-
-        Ok(())
-    }
-
     /// Verifies a proof for a given key and value.
     ///
     /// This function checks if a given key-value pair exists in the provided proof
@@ -266,7 +239,7 @@ impl<D: Digest> Forestry<D> {
         }
 
         proof.iter().any(|step| {
-            matches!(step, Step::Leaf { key: leaf_key, value: leaf_value, .. } if *leaf_key == key && *leaf_value == value && *leaf_value != Hash::zero())
+            matches!(step, Step::Leaf { key: leaf_key, value: leaf_value, .. } if *leaf_key == key && *leaf_value == value)
         })
     }
 
@@ -293,38 +266,6 @@ impl<D: Digest> Forestry<D> {
             key,
             value,
         });
-        Self::compress_path(&mut new_proof);
-        new_proof
-    }
-
-    /// Marks a key-value pair as deleted in the proof.
-    ///
-    /// This function creates a new proof by marking the leaf with the given key as deleted
-    /// and applies path compression.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - The Hash of the key to mark as deleted.
-    ///
-    /// # Returns
-    ///
-    /// A new Proof with the key-value pair marked as deleted and path compression applied.
-    fn mark_as_deleted(&self, key: Hash) -> Proof {
-        let mut new_proof = self.proof.clone();
-        for step in new_proof.iter_mut() {
-            if let Step::Leaf {
-                key: leaf_key,
-                value,
-                ..
-            } = step
-            {
-                if *leaf_key == key {
-                    // Mark the leaf as deleted by setting its value to a special "tombstone" value
-                    *value = Hash::zero(); // Use a zero hash to represent a tombstone
-                    break;
-                }
-            }
-        }
         Self::compress_path(&mut new_proof);
         new_proof
     }
@@ -646,56 +587,6 @@ mod tests {
                         prop_assert!(non_empty_trie.verify(key1.as_bytes(), value2.as_bytes()));
                     }
 
-                    #[test_strategy::proptest]
-                    fn test_proof_verification_with_tombstones(
-                        #[strategy(non_empty_string())] key1: String,
-                        value1: String,
-                        #[strategy(non_empty_string())] key2: String,
-                        value2: String
-                    ) {
-                        prop_assume!(key1 != key2);
-                        prop_assume!(value1 != value2);
-
-                        let mut trie = Forestry::<$digest>::empty();
-
-                        // Insert and then remove key1
-                        trie.insert(key1.as_bytes(), value1.as_bytes())?;
-                        trie.remove(key1.as_bytes())?;
-
-                        // Verify that key1 is not in the trie (tombstone)
-                        prop_assert!(!trie.verify(key1.as_bytes(), value1.as_bytes()));
-                        prop_assert!(!trie.verify(key1.as_bytes(), &[]));
-
-                        // Insert key2
-                        trie.insert(key2.as_bytes(), value2.as_bytes())?;
-
-                        // Verify that key2 is in the trie
-                        prop_assert!(trie.verify(key2.as_bytes(), value2.as_bytes()));
-
-                        // Verify that key1 is still not in the trie
-                        prop_assert!(!trie.verify(key1.as_bytes(), value1.as_bytes()));
-                        prop_assert!(!trie.verify(key1.as_bytes(), &[]));
-
-                        // Remove key2
-                        trie.remove(key2.as_bytes())?;
-
-                        // Verify that both keys are not in the trie (tombstones)
-                        prop_assert!(!trie.verify(key1.as_bytes(), value1.as_bytes()));
-                        prop_assert!(!trie.verify(key1.as_bytes(), &[]));
-                        prop_assert!(!trie.verify(key2.as_bytes(), value2.as_bytes()));
-                        prop_assert!(!trie.verify(key2.as_bytes(), &[]));
-
-                        // Reinsert key1 with a different value
-                        trie.insert(key1.as_bytes(), value2.as_bytes())?;
-
-                        // Verify that key1 is now in the trie with the new value
-                        prop_assert!(trie.verify(key1.as_bytes(), value2.as_bytes()));
-                        prop_assert!(!trie.verify(key1.as_bytes(), value1.as_bytes()));
-
-                        // Verify that key2 is still not in the trie
-                        prop_assert!(!trie.verify(key2.as_bytes(), value2.as_bytes()));
-                        prop_assert!(!trie.verify(key2.as_bytes(), &[]));
-                    }
 
                     #[test_strategy::proptest]
                     fn test_proof_size(
@@ -774,64 +665,6 @@ mod tests {
                         prop_assert!(!trie.verify(key2.as_bytes(), value2.as_bytes()));
                     }
 
-                    #[test_strategy::proptest]
-                    fn test_remove_through_tombstone(
-                        #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
-                        #[strategy(non_empty_string())] key: String,
-                        value: String
-                    ) {
-                        // Insert a key-value pair
-                        trie.insert(key.as_bytes(), value.as_bytes())?;
-                        prop_assert!(trie.verify(key.as_bytes(), value.as_bytes()));
-
-                        // Remove the key
-                        trie.remove(key.as_bytes())?;
-
-                        // Verify that the key-value pair is no longer present
-                        prop_assert!(!trie.verify(key.as_bytes(), value.as_bytes()));
-
-                        // Try to remove the key again (should not cause an error)
-                        prop_assert!(trie.remove(key.as_bytes()).is_ok());
-
-                        // Verify that inserting the same key with a different value works
-                        let new_value = "new_value".to_string();
-                        trie.insert(key.as_bytes(), new_value.as_bytes())?;
-                        prop_assert!(trie.verify(key.as_bytes(), new_value.as_bytes()));
-                        prop_assert!(!trie.verify(key.as_bytes(), value.as_bytes()));
-                    }
-
-                    #[test_strategy::proptest]
-                    fn test_multiple_removes(
-                        #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
-                        #[strategy(non_empty_string())] key1: String,
-                        value1: String,
-                        #[strategy(non_empty_string())] key2: String,
-                        value2: String
-                    ) {
-                        prop_assume!(key1 != key2);
-
-                        // Insert two key-value pairs
-                        trie.insert(key1.as_bytes(), value1.as_bytes())?;
-                        trie.insert(key2.as_bytes(), value2.as_bytes())?;
-
-                        // Verify both are present
-                        prop_assert!(trie.verify(key1.as_bytes(), value1.as_bytes()));
-                        prop_assert!(trie.verify(key2.as_bytes(), value2.as_bytes()));
-
-                        // Remove the first key
-                        trie.remove(key1.as_bytes())?;
-
-                        // Verify first key is removed but second is still present
-                        prop_assert!(!trie.verify(key1.as_bytes(), value1.as_bytes()));
-                        prop_assert!(trie.verify(key2.as_bytes(), value2.as_bytes()));
-
-                        // Remove the second key
-                        trie.remove(key2.as_bytes())?;
-
-                        // Verify both keys are removed
-                        prop_assert!(!trie.verify(key1.as_bytes(), value1.as_bytes()));
-                        prop_assert!(!trie.verify(key2.as_bytes(), value2.as_bytes()));
-                    }
 
                     #[test_strategy::proptest]
                     fn test_second_preimage_resistance(
