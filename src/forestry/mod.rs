@@ -487,6 +487,7 @@ mod tests {
                     use super::*;
                     use $digest;
                     use proptest::collection::vec;
+                    use ::test_strategy::proptest;
 
                     type ForestryT = Forestry<$digest>;
                     $crate::test_state_crdt_properties!(ForestryT);
@@ -495,9 +496,9 @@ mod tests {
                         any::<String>().prop_filter("must not be empty", |s| !s.is_empty())
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_verify_proof(
-                        #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
+                        mut trie: Forestry<$digest>,
                         #[strategy(non_empty_string())] key: String,
                         value: String
                     ) {
@@ -507,9 +508,9 @@ mod tests {
                             key, value);
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_insert(
-                        #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
+                        mut trie: Forestry<$digest>,
                         #[strategy(non_empty_string())] key: String,
                         value: String
                     ) {
@@ -519,9 +520,9 @@ mod tests {
                         prop_assert_ne!(trie, original_trie);
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_multiple_inserts(
-                        #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
+                        mut trie: Forestry<$digest>,
                         #[strategy(non_empty_string())] key1: String,
                         value1: String,
                         #[strategy(non_empty_string())] key2: String,
@@ -549,7 +550,7 @@ mod tests {
                         assert!(empty_trie.is_empty());
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_start_empty_add_one_check_hash(
                         #[strategy(non_empty_string())] key: String,
                         value: String
@@ -565,7 +566,7 @@ mod tests {
                         prop_assert_ne!(empty_root, trie.root, "Hash should change after insertion");
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_proof_verification(
                         #[strategy(non_empty_string())] key1: String,
                         value1: String,
@@ -595,9 +596,9 @@ mod tests {
                     }
 
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_proof_size(
-                        #[strategy(any::<Forestry<$digest>>())] trie: Forestry<$digest>
+                        trie: Forestry<$digest>,
                     ) {
                         let proof = trie.proof.clone();
                         prop_assert!(proof.len() <= 130 * (4 + 1),
@@ -612,7 +613,7 @@ mod tests {
                         assert!(trie.insert(b"key", &[]).is_ok());
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_root_proof_equality(
                         #[strategy(any::<Forestry<$digest>>())] trie1: Forestry<$digest>,
                         #[strategy(any::<Forestry<$digest>>())] trie2: Forestry<$digest>
@@ -624,14 +625,14 @@ mod tests {
                         );
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_default_is_empty(
                         #[strategy(Just(Forestry::<$digest>::default()))] default_trie: Forestry<$digest>
                     ) {
                         prop_assert!(default_trie.is_empty(), "Default instance should be empty");
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_root_matches_calculated(
                         #[strategy(any::<Forestry<$digest>>())] trie: Forestry<$digest>
                     ) {
@@ -639,14 +640,14 @@ mod tests {
                         prop_assert_eq!(trie.root, calculated_root, "Root should match calculated root");
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_from_proof_root_calculation(#[strategy(any::<Proof>())] proof: Proof) {
                         let trie = Forestry::<$digest>::from_proof(proof.clone());
                         let calculated_root = Forestry::<$digest>::calculate_root(&proof);
                         prop_assert_eq!(trie.root, calculated_root, "Root should match calculated root after from_proof");
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_verify_non_existent(
                         #[strategy(any::<Forestry<$digest>>())] mut trie: Forestry<$digest>,
                         #[strategy(non_empty_string())] key1: String,
@@ -673,7 +674,7 @@ mod tests {
                     }
 
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_second_preimage_resistance(
                         mut trie: Forestry<$digest>,
                         #[strategy(vec(any::<u8>(), 1..100))] key1: Vec<u8>,
@@ -696,7 +697,7 @@ mod tests {
                         prop_assert!(trie.verify(&key2, &[value2]), "Second key-value pair not found");
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_malicious_proof_resistance(
                         trie: Forestry<$digest>,
                         key: Vec<u8>,
@@ -718,7 +719,7 @@ mod tests {
                         prop_assert_ne!(trie.root, malicious_trie.root, "Malicious trie has the same root hash");
                     }
 
-                    #[test_strategy::proptest]
+                    #[proptest]
                     fn test_large_key_value_pairs(
                         mut trie: Forestry<$digest>,
                         #[strategy(vec(any::<u8>(), 100..1000))] large_key: Vec<u8>,
@@ -733,6 +734,27 @@ mod tests {
                         prop_assert!(size_increase <= large_key.len() + large_value.len(),
                             "Trie size increase {} is larger than key size {} plus value size {}",
                             size_increase, large_key.len(), large_value.len());
+                    }
+
+                    #[proptest]
+                    fn test_path_compression(
+                        mut trie: Forestry<$digest>,
+                        #[strategy(non_empty_string())] key1: String,
+                        #[strategy(non_empty_string())] key2: String,
+                        value1: String,
+                        value2: String,
+                    ) {
+                        prop_assume!(key1 != key2);
+
+                        // Insert two elements that should trigger path compression
+                        trie.insert(key1.as_bytes(), value1.as_bytes())?;
+                        trie.insert(key2.as_bytes(), value2.as_bytes())?;
+
+                        // Verify the proof length is optimal after compression
+                        prop_assert!(
+                            trie.proof.len() <= 5,
+                            "Proof length exceeds expected maximum after compression"
+                        );
                     }
 
                     type Mpf = Forestry<$digest>;

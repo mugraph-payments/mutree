@@ -24,7 +24,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::Proof;
+    /// use mucrdt::prelude::Proof;
     ///
     /// let proof = Proof::new();
     /// prop_assert!(proof.is_empty());
@@ -43,7 +43,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let proof = Proof::new();
     /// let steps: &[Step] = proof.steps();
@@ -94,7 +94,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let proof = Proof::new();
     /// let step: Option<&Step> = proof.get(0);
@@ -113,7 +113,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let mut proof = Proof::new();
     /// proof.retain(|step| match step {
@@ -142,7 +142,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let mut proof = Proof::new();
     /// let removed_step: Option<Step> = proof.remove(0);
@@ -165,7 +165,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let mut proof = Proof::new();
     /// proof.push(Step::Leaf { key: vec![], value: Hash::default() });
@@ -184,7 +184,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let mut proof = Proof::new();
     /// let steps = vec![Step::Leaf { key: vec![], value: Hash::default() }];
@@ -209,7 +209,7 @@ impl Proof {
     /// # Examples
     ///
     /// ```
-    /// use mucrdt::forestry::{Proof, Step};
+    /// use mucrdt::prelude::{Proof, Step};
     ///
     /// let mut proof = Proof::new();
     /// proof.push(Step::Leaf { key: vec![], value: Hash::default() });
