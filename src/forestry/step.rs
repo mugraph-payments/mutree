@@ -35,7 +35,8 @@ impl ToBytes for Step {
     fn to_bytes(&self) -> Self::Output {
         match self {
             Step::Branch { skip, neighbors } => {
-                let mut bytes = vec![0u8]; // 0 indicates Branch
+                let mut bytes = Vec::with_capacity(1 + std::mem::size_of::<usize>() + 32 * 4);
+                bytes.push(0u8); // 0 indicates Branch
                 bytes.extend_from_slice(&skip.to_be_bytes());
                 for neighbor in neighbors {
                     bytes.extend_from_slice(neighbor.as_ref());

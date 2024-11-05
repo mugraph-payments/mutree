@@ -23,6 +23,11 @@ impl Proof {
     }
 
     #[inline]
+    pub fn iter_steps(&self) -> impl Iterator<Item = &Step> {
+        self.0.iter()
+    }
+
+    #[inline]
     pub fn root(&self) -> Hash {
         if self.is_empty() {
             return Hash::default();
@@ -142,16 +147,15 @@ impl PartialOrd for Proof {
             ord => return ord,
         }
 
-        // If lengths are equal, compare each step
-        for (self_step, other_step) in self.iter().zip(other.iter()) {
-            match self_step.partial_cmp(other_step) {
-                Some(Ordering::Equal) => continue,
-                ord => return ord,
-            }
-        }
-
-        // If all steps are equal, the proofs are equal
-        Some(Ordering::Equal)
+        // Use iterators instead of cloning
+        self.iter()
+            .zip(other.iter())
+            .fold(Some(Ordering::Equal), |acc, (a, b)| {
+                match (acc, a.partial_cmp(b)) {
+                    (Some(Ordering::Equal), Some(ord)) => Some(ord),
+                    (ord, _) => ord,
+                }
+            })
     }
 }
 
