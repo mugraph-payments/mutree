@@ -473,6 +473,9 @@ impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
 
 #[cfg(all(test, any(feature = "blake3", feature = "sha2")))]
 mod tests {
+    use digest::consts::U32;
+    use test_strategy::proptest;
+
     use super::*;
 
     macro_rules! generate_mpf_tests {
@@ -738,24 +741,28 @@ mod tests {
         };
     }
 
-    #[cfg(feature = "blake3")]
-    type Blake3 = blake3::Hasher;
     type Blake2s = blake2::Blake2s256;
-    #[cfg(feature = "sha2")]
-    type Sha256 = sha2::Sha256;
+    generate_mpf_tests!(Blake2s);
+
+    type Blake2b = blake2::Blake2b<U32>;
+    generate_mpf_tests!(Blake2b);
 
     #[cfg(feature = "blake3")]
+    type Blake3 = blake3::Hasher;
+    #[cfg(feature = "blake3")]
     generate_mpf_tests!(Blake3);
-    generate_mpf_tests!(Blake2s);
+
+    #[cfg(feature = "sha2")]
+    type Sha256 = sha2::Sha256;
     #[cfg(feature = "sha2")]
     generate_mpf_tests!(Sha256);
 
-    #[test_strategy::proptest]
+    #[proptest]
     fn test_merkle_proof_reflexive(proof: Proof) {
         prop_assert_eq!(proof.partial_cmp(&proof), Some(std::cmp::Ordering::Equal));
     }
 
-    #[test_strategy::proptest]
+    #[proptest]
     fn test_merkle_proof_antisymmetric(proof1: Proof, proof2: Proof) {
         if proof1 == proof2 {
             prop_assert_eq!(proof1.partial_cmp(&proof2), Some(std::cmp::Ordering::Equal));
@@ -767,7 +774,7 @@ mod tests {
         }
     }
 
-    #[test_strategy::proptest]
+    #[proptest]
     fn test_merkle_proof_transitive(proof1: Proof, proof2: Proof, proof3: Proof) {
         if let (Some(ord1), Some(ord2)) = (proof1.partial_cmp(&proof2), proof2.partial_cmp(&proof3))
         {
@@ -777,7 +784,7 @@ mod tests {
         }
     }
 
-    #[test_strategy::proptest]
+    #[proptest]
     fn test_merkle_proof_consistency(proof1: Proof, proof2: Proof) {
         let cmp1 = proof1.partial_cmp(&proof2);
         let cmp2 = proof2.partial_cmp(&proof1);
