@@ -212,7 +212,41 @@ impl Default for Step {
     }
 }
 
-crate::impl_associate_bytes_types!(Step);
+impl std::hash::Hash for Step {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_bytes().hash(state);
+    }
+}
+
+impl FromHex for Step {
+    #[inline]
+    fn from_hex(input: &str) -> Result<Self> {
+        let bytes = hex::decode(input)?;
+        Self::from_bytes(&bytes)
+    }
+}
+
+impl ToHex for Step {
+    #[inline]
+    fn to_hex(&self) -> String {
+        hex::encode(&ToBytes::to_bytes(self))
+    }
+}
+
+impl std::fmt::LowerHex for Step {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", hex::encode(self.to_bytes()))
+    }
+}
+
+impl std::fmt::UpperHex for Step {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", hex::encode_upper(self.to_bytes()))
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Display, Formatter, LowerHex, UpperHex};
 
 use digest::Digest;
 use proptest::{prelude::*, strategy::BoxedStrategy};
@@ -12,14 +12,14 @@ pub struct Hash([u8; 32]);
 
 impl Display for Hash {
     #[inline]
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", hex::encode(self.0))
     }
 }
 
-impl std::fmt::Debug for Hash {
+impl fmt::Debug for Hash {
     #[inline]
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", hex::encode(self.0))
     }
 }
@@ -145,7 +145,41 @@ impl ToBytes for Hash {
     }
 }
 
-crate::impl_associate_bytes_types!(Hash);
+impl std::hash::Hash for Hash {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_bytes().hash(state);
+    }
+}
+
+impl FromHex for Hash {
+    #[inline]
+    fn from_hex(input: &str) -> Result<Self> {
+        let bytes = hex::decode(input)?;
+        Self::from_bytes(&bytes)
+    }
+}
+
+impl ToHex for Hash {
+    #[inline]
+    fn to_hex(&self) -> String {
+        hex::encode(&ToBytes::to_bytes(self))
+    }
+}
+
+impl LowerHex for Hash {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", hex::encode(self.to_bytes()))
+    }
+}
+
+impl UpperHex for Hash {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", hex::encode_upper(self.to_bytes()))
+    }
+}
 
 #[cfg(test)]
 mod tests {
