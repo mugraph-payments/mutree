@@ -1,7 +1,10 @@
-use crate::{error::Error, error::Result, hash::Hash};
 use test_strategy::Arbitrary;
 
 use super::{FromBytes, ToBytes};
+use crate::{
+    error::{Error, Result},
+    hash::Hash,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Arbitrary)]
 pub struct Neighbor {

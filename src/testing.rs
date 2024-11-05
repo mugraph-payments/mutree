@@ -62,8 +62,10 @@ macro_rules! test_state_crdt_properties {
 #[macro_export]
 macro_rules! test_op_crdt_properties_inner {
     ($type: ty, $op_type: ty) => {
-        use $crate::__dependencies::proptest::prelude::*;
-        use $crate::prelude::{CmRDT, Result};
+        use $crate::{
+            __dependencies::proptest::prelude::*,
+            prelude::{CmRDT, Result},
+        };
 
         fn build_op(items: Vec<&$op_type>) -> Result<$type> {
             items

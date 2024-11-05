@@ -1,8 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 use digest::Digest;
-use proptest::prelude::*;
-use proptest::strategy::BoxedStrategy;
+use proptest::{prelude::*, strategy::BoxedStrategy};
 
 use crate::prelude::*;
 
@@ -152,11 +151,11 @@ crate::impl_associate_bytes_types!(Hash);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use blake2::digest::consts::U32;
-    use blake2::Blake2b;
+    use blake2::{digest::consts::U32, Blake2b};
     use proptest::prelude::prop::collection::vec;
     use test_strategy::proptest;
+
+    use super::*;
 
     type Blake2b256 = Blake2b<U32>;
 

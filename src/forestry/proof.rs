@@ -1,9 +1,11 @@
-use std::cmp::Ordering;
-use std::ops::{Deref, DerefMut};
+use std::{
+    cmp::Ordering,
+    ops::{Deref, DerefMut},
+};
 
-use super::Step;
 use proptest::{collection::vec, prelude::*};
 
+use super::Step;
 use crate::prelude::Hash;
 
 /// Represents a proof in the HashGraph.
@@ -313,8 +315,9 @@ impl Arbitrary for Proof {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_strategy::proptest;
+
+    use super::*;
 
     #[proptest]
     fn test_proof_push_and_pop(mut proof: Proof, step: Step) {

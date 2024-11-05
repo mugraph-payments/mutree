@@ -21,13 +21,19 @@ pub mod prelude {
         error::{Error, Result},
         forestry::{Forestry, Neighbor, Proof, Step},
         hash::Hash,
-        CmRDT, CvRDT, FromBytes, FromHex, ToBytes, ToHex,
+        CmRDT,
+        CvRDT,
+        FromBytes,
+        FromHex,
+        ToBytes,
+        ToHex,
     };
 }
 
-use crate::error::Result;
 use digest::Digest;
 use proptest::prelude::*;
+
+use crate::error::Result;
 
 #[doc(hidden)]
 /// This is a hidden module to make the macros defined on this crate available for the users.

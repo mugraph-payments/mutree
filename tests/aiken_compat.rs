@@ -1,5 +1,4 @@
-use blake2::digest::consts::U32;
-use blake2::Blake2b;
+use blake2::{digest::consts::U32, Blake2b};
 use mucrdt::prelude::*;
 use proptest::prelude::{
     prop::{collection::vec, sample::select},
@@ -10,19 +9,13 @@ use test_strategy::proptest;
 type Blake2b256 = Blake2b<U32>;
 
 // Bitcoin block test constants
-const BITCOIN_845999_ROOT: &str =
-    "225a4599b804ba53745538c83bfa699ecf8077201b61484c91171f5910a4a8f9";
-const BITCOIN_845999_BLOCK: &str =
-    "00000000000000000002d79d6d49c114e174c22b8d8432432ce45a05fd6a4d7b";
-const BITCOIN_845999_BODY: &str =
-    "f48fcceeac43babbf53a90023be2799a9d7617098b76ff229440ccbd1fd1b4d4";
+const BITCOIN_845999_ROOT: &str = "225a4599b804ba53745538c83bfa699ecf8077201b61484c91171f5910a4a8f9";
+const BITCOIN_845999_BLOCK: &str = "00000000000000000002d79d6d49c114e174c22b8d8432432ce45a05fd6a4d7b";
+const BITCOIN_845999_BODY: &str = "f48fcceeac43babbf53a90023be2799a9d7617098b76ff229440ccbd1fd1b4d4";
 
-const BITCOIN_845602_ROOT: &str =
-    "225a4599b804ba53745538c83bfa699ecf8077201b61484c91171f5910a4a8f9";
-const BITCOIN_845602_BLOCK: &str =
-    "0000000000000000000261a131bf48cc5a19658ade8cfede99dc1c3933300d60";
-const BITCOIN_845602_BODY: &str =
-    "26f711634eb26999169bb927f629870938bb4b6b4d1a078b44a6b4ec54f9e8df";
+const BITCOIN_845602_ROOT: &str = "225a4599b804ba53745538c83bfa699ecf8077201b61484c91171f5910a4a8f9";
+const BITCOIN_845602_BLOCK: &str = "0000000000000000000261a131bf48cc5a19658ade8cfede99dc1c3933300d60";
+const BITCOIN_845602_BODY: &str = "26f711634eb26999169bb927f629870938bb4b6b4d1a078b44a6b4ec54f9e8df";
 const BITCOIN_845602_NEW_ROOT: &str =
     "507c03bc4a25fd1cac2b03592befa4225c5f3488022affa0ab059ca350de2353";
 
@@ -31,8 +24,7 @@ const FRUIT_TRIE_ROOT: &str = "4acd78f345a686361df77541b2e0b533f53362e36620a1fdd
 
 #[test]
 fn test_verify_bitcoin_block_845999() {
-    let trie =
-        Forestry::<Blake2b256>::from_root(&hex::decode(BITCOIN_845999_ROOT).unwrap()).unwrap();
+    let trie = Forestry::<Blake2b256>::from_root(&hex::decode(BITCOIN_845999_ROOT).unwrap()).unwrap();
     let block_hash = hex::decode(BITCOIN_845999_BLOCK).unwrap();
     let block_body = hex::decode(BITCOIN_845999_BODY).unwrap();
 

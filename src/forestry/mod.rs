@@ -369,7 +369,7 @@ impl<D: Digest> Forestry<D> {
                 Step::Branch { neighbors, .. } => {
                     // First hash the number of non-zero neighbors
                     let non_zero = neighbors.iter().filter(|&&n| n != Hash::zero()).count();
-                    hasher.update(&[non_zero as u8]);
+                    hasher.update([non_zero as u8]);
                     // Then hash each non-zero neighbor in order
                     for neighbor in neighbors.iter().filter(|&&n| n != Hash::zero()) {
                         hasher.update(neighbor.as_ref());
@@ -377,16 +377,16 @@ impl<D: Digest> Forestry<D> {
                 }
                 Step::Fork { neighbor, .. } => {
                     // Hash fork marker
-                    hasher.update(&[0xFF]);
+                    hasher.update([0xFF]);
                     // Hash nibble and prefix
-                    hasher.update(&[neighbor.nibble]);
+                    hasher.update([neighbor.nibble]);
                     hasher.update(&neighbor.prefix);
                     // Hash root
                     hasher.update(neighbor.root.as_ref());
                 }
                 Step::Leaf { key, value, .. } => {
                     // Hash leaf marker
-                    hasher.update(&[0x00]);
+                    hasher.update([0x00]);
                     // Hash key and value
                     hasher.update(key.as_ref());
                     hasher.update(value.as_ref());
@@ -473,8 +473,9 @@ impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
 
 #[cfg(all(test, any(feature = "blake3", feature = "sha2")))]
 mod tests {
-    use digest::consts::U32;
     use std::cmp::Ordering;
+
+    use digest::consts::U32;
     use test_strategy::proptest;
 
     use super::*;
@@ -782,8 +783,7 @@ mod tests {
 
     #[proptest]
     fn test_merkle_proof_transitive(proof1: Proof, proof2: Proof, proof3: Proof) {
-        if let (Some(ord1), Some(ord2)) = (proof1.partial_cmp(&proof2), proof2.partial_cmp(&proof3))
-        {
+        if let (Some(ord1), Some(ord2)) = (proof1.partial_cmp(&proof2), proof2.partial_cmp(&proof3)) {
             if ord1 == ord2 {
                 prop_assert_eq!(proof1.partial_cmp(&proof3), Some(ord1));
             }
