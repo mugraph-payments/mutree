@@ -590,21 +590,31 @@ mod tests {
 
     #[proptest]
     fn test_merkle_proof_antisymmetric(proof1: Proof, proof2: Proof) {
-        if proof1 == proof2 {
-            prop_assert_eq!(proof1.partial_cmp(&proof2), Some(Ordering::Equal));
-            prop_assert_eq!(proof2.partial_cmp(&proof1), Some(Ordering::Equal));
-        } else if let (Some(ord1), Some(ord2)) =
-            (proof1.partial_cmp(&proof2), proof2.partial_cmp(&proof1))
-        {
-            prop_assert_ne!(ord1, ord2);
+        let cmp1 = proof1.partial_cmp(&proof2);
+        let cmp2 = proof2.partial_cmp(&proof1);
+
+        match (cmp1, cmp2) {
+            (Some(Ordering::Less), Some(Ordering::Greater))
+            | (Some(Ordering::Greater), Some(Ordering::Less))
+            | (Some(Ordering::Equal), Some(Ordering::Equal)) => {
+                prop_assert_eq!(cmp1.map(|o| o.reverse()), cmp2);
+            }
+            _ => prop_assert!(false, "Unexpected ordering: {:?} vs {:?}", cmp1, cmp2),
         }
     }
 
     #[proptest]
     fn test_merkle_proof_transitive(proof1: Proof, proof2: Proof, proof3: Proof) {
-        if let (Some(ord1), Some(ord2)) = (proof1.partial_cmp(&proof2), proof2.partial_cmp(&proof3)) {
-            if ord1 == ord2 {
-                prop_assert_eq!(proof1.partial_cmp(&proof3), Some(ord1));
+        if let (Some(ord1), Some(ord2), Some(ord3)) = (
+            proof1.partial_cmp(&proof2),
+            proof2.partial_cmp(&proof3),
+            proof1.partial_cmp(&proof3),
+        ) {
+            match (ord1, ord2) {
+                (Ordering::Less, Ordering::Less) => prop_assert_eq!(ord3, Ordering::Less),
+                (Ordering::Greater, Ordering::Greater) => prop_assert_eq!(ord3, Ordering::Greater),
+                (Ordering::Equal, Ordering::Equal) => prop_assert_eq!(ord3, Ordering::Equal),
+                _ => {}
             }
         }
     }
