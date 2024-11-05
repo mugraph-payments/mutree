@@ -288,6 +288,7 @@ mod tests {
 
                     type ForestryT = Forestry<$digest>;
                     $crate::test_state_crdt_properties!(ForestryT);
+                    $crate::test_op_crdt_properties!(ForestryT, Proof);
 
                     fn non_empty_string() -> impl Strategy<Value = String> {
                         any::<String>().prop_filter("must not be empty", |s| !s.is_empty())
@@ -553,10 +554,6 @@ mod tests {
                             "Proof length exceeds expected maximum after compression"
                         );
                     }
-
-                    type Mpf = Forestry<$digest>;
-                    crate::test_state_crdt_properties!(Mpf);
-                    crate::test_op_crdt_properties!(Mpf, Proof);
                 }
             }
         };
