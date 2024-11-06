@@ -30,17 +30,17 @@ impl<D: Digest + 'static> BenchData<D> {
         // Pre-populate the Forestry
         for _ in 0..size {
             let key_len = rng.gen_range(1..100);
-            let value_len = rng.gen_range(1..100);
+            let value_len = rng.gen_range(100..10000);
             let key: Vec<u8> = (0..key_len).map(|_| rng.gen()).collect();
             let value: Vec<u8> = (0..value_len).map(|_| rng.gen()).collect();
             trie.insert(&key, &value).unwrap();
         }
 
         // Generate a single key-value pair for insertion
-        let insert_key_len = rng.gen_range(1..100);
-        let insert_value_len = rng.gen_range(1..100);
-        let insert_key: Vec<u8> = (0..insert_key_len).map(|_| rng.gen()).collect();
-        let insert_value: Vec<u8> = (0..insert_value_len).map(|_| rng.gen()).collect();
+        let key_len = rng.gen_range(1..100);
+        let value_len = rng.gen_range(100..10000);
+        let insert_key: Vec<u8> = (0..key_len).map(|_| rng.gen()).collect();
+        let insert_value: Vec<u8> = (0..value_len).map(|_| rng.gen()).collect();
 
         Self {
             trie,
@@ -55,7 +55,7 @@ fn bench_insert<D: Digest + 'static, T: Measurement>(c: &mut Criterion<T>, name:
     let type_name = type_name::<T>().split(":").take(1).collect::<Vec<_>>()[0];
     let mut group = c.benchmark_group(format!("trie/{}/{}", name, type_name));
 
-    for size in [10, 100, 1000].iter() {
+    for size in [1000, 10000, 100000].iter() {
         let bench_data = BenchData::<D>::new(*size);
 
         group.bench_with_input(BenchmarkId::new("insert", size), &bench_data, |b, data| {
@@ -92,7 +92,7 @@ fn trie_benchmark<T: Measurement>(c: &mut Criterion<T>) {
 }
 
 fn cycles_per_byte_bench(c: &mut Criterion<CyclesPerByte>) {
-    trie_benchmark(c)
+    trie_benchmark(c);
 }
 
 fn wall_time_bench(c: &mut Criterion<WallTime>) {
@@ -102,8 +102,8 @@ fn wall_time_bench(c: &mut Criterion<WallTime>) {
 criterion_group!(
     name = benches_cycles;
     config = Criterion::default()
-        .sample_size(10)
-        .measurement_time(Duration::from_secs(3))
+        .sample_size(100)
+        .measurement_time(Duration::from_secs(10))
         .with_measurement(CyclesPerByte);
     targets = cycles_per_byte_bench
 );
@@ -111,8 +111,8 @@ criterion_group!(
 criterion_group!(
     name = benches_time;
     config = Criterion::default()
-        .sample_size(10)
-        .measurement_time(Duration::from_secs(3));
+        .sample_size(100)
+        .measurement_time(Duration::from_secs(10));
     targets = wall_time_bench
 );
 
