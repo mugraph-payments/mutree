@@ -8,6 +8,19 @@ use proptest::{collection::vec, prelude::*};
 use super::Step;
 use crate::prelude::Hash;
 
+/// A complete proof in a Merkle-Patricia Forestry.
+///
+/// A proof consists of a sequence of steps that authenticate a path through the trie,
+/// allowing verification of membership, insertion, or deletion operations. The proof
+/// structure is optimized to minimize size while maintaining security:
+///
+/// - Branch steps use a mini Sparse-Merkle Tree requiring only 4 hashes
+/// - Fork steps include complete neighbor information for reconstruction
+/// - Leaf steps contain the actual key-value pair hashes
+///
+/// The proof size is bounded by O(log₁₆(n)) steps, where each step requires at most
+/// 130 bytes (for Branch nodes), significantly improving upon traditional MPT proofs
+/// while maintaining similar verification costs.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Proof(Vec<Step>);
 
@@ -150,10 +163,10 @@ impl PartialOrd for Proof {
         // Use iterators instead of cloning
         self.iter()
             .zip(other.iter())
-            .fold(Some(Ordering::Equal), |acc, (a, b)| {
-                match (acc, a.partial_cmp(b)) {
-                    (Some(Ordering::Equal), Some(ord)) => Some(ord),
-                    (ord, _) => ord,
+            .try_fold(Ordering::Equal, |acc, (a, b)| {
+                match (acc, a.partial_cmp(b)?) {
+                    (Ordering::Equal, ord) => Some(ord),
+                    (ord, _) => Some(ord),
                 }
             })
     }

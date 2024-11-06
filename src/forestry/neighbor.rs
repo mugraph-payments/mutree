@@ -6,10 +6,23 @@ use crate::{
     hash::Hash,
 };
 
+/// A neighbor node in a Merkle-Patricia Forestry.
+///
+/// Neighbors represent adjacent nodes in the trie structure and are used to construct
+/// proof steps. Each neighbor contains:
+/// - A nibble (4-bit value) indicating its position
+/// - A prefix representing the common path segment
+/// - A root hash authenticating its subtree
+///
+/// This structure is particularly important for Fork steps, where having the complete
+/// neighbor information allows proper verification and reconstruction of the trie.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Arbitrary)]
 pub struct Neighbor {
+    /// The 4-bit position (0-15) of this neighbor in its parent branch
     pub nibble: u8,
+    /// The common prefix shared with its siblings, encoded as bytes
     pub prefix: Vec<u8>,
+    /// The root hash of this neighbor's subtree
     pub root: Hash,
 }
 

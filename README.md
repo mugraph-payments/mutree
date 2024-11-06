@@ -110,7 +110,7 @@ Below is an example of how to use the Merkle-Patricia Forestry:
 use mucrdt::prelude::*;
 use blake2::Blake2s256; // Or any other supported Digest implementation
 
-type Forestry = mucrdt::forestry::Forestry<Blake2s256>;
+type Forestry = mucrdt::prelude::Forestry<Blake2s256>;
 
 fn main() -> Result<(), Error> {
     // Create a new empty forestry

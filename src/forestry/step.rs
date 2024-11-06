@@ -4,10 +4,50 @@ use proptest::{array::uniform4, prelude::*};
 
 use crate::prelude::*;
 
+/// A single step in a Merkle-Patricia Forestry proof.
+///
+/// Steps represent the different node types encountered while traversing the trie:
+/// - Branch: An internal node with multiple children, optimized using a mini Sparse-Merkle Tree
+/// - Fork: A special case of branch with exactly one neighbor
+/// - Leaf: A terminal node containing the actual key-value pair
+///
+/// Each step includes a `skip` value indicating the number of nibbles shared in the common
+/// prefix at that level, optimizing storage by avoiding redundant prefix storage.
+///
+/// # Branch Node Structure
+///
+/// Branch nodes use a 4-level binary Sparse-Merkle Tree to represent up to 16 children:
+/// ```text
+///        ┌───────┴───────┐
+///    ┌───┴───┐       ┌───┴───┐
+///  ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐
+/// ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐
+/// 0 1 2 3 4 5 6 7 8 9 a b c d e f
+/// ```
+///
+/// This structure reduces the proof size from 15*32=480 bytes to just 4*32=130 bytes
+/// per branch step while maintaining security through the Merkle Tree structure.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
+    /// A branch node with multiple children, using an optimized 4-level Sparse-Merkle Tree
+    /// representation requiring only 4 hashes instead of up to 15.
+    ///
+    /// The `skip` value indicates the length of the common prefix at this level.
+    /// The `neighbors` array contains exactly 4 hashes representing the authentication path
+    /// in the mini Sparse-Merkle Tree of the branch's children.
     Branch { skip: usize, neighbors: [Hash; 4] },
+
+    /// A fork node with exactly one neighbor, requiring complete neighbor information
+    /// for proper proof verification.
+    ///
+    /// The `skip` value indicates the length of the common prefix at this level.
+    /// The `neighbor` contains the complete information about the single adjacent node.
     Fork { skip: usize, neighbor: Neighbor },
+
+    /// A leaf node containing the actual key-value pair.
+    ///
+    /// The `skip` value indicates the length of the common prefix at this level.
+    /// The `key` and `value` are the hashes of the original key-value pair.
     Leaf { skip: usize, key: Hash, value: Hash },
 }
 

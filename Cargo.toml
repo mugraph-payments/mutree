@@ -30,6 +30,7 @@ sha2 = ["dep:sha2"]
 sha3 = ["dep:sha3"]
 
 [dev-dependencies]
+blake2 = "0.10.6"
 criterion = { version = "0.5.1", features = ["real_blackbox"] }
 criterion-cycles-per-byte = "0.6.1"
 rand = "0.8.5"

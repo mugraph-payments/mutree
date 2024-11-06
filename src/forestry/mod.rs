@@ -13,6 +13,43 @@ mod step;
 
 pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 
+/// A Merkle-Patricia Forestry implementation that provides succinct proofs through an optimized
+/// branch structure using tiny Sparse-Merkle trees.
+///
+/// The Forestry uses a radix-16 (hexadecimal) structure where each branch node's neighbors are
+/// arranged in a binary Sparse-Merkle tree of depth 4. This innovative approach reduces proof sizes
+/// from ~480 bytes to ~130 bytes per branch step while maintaining security.
+///
+/// # Structure
+///
+/// - Branch nodes use a mini Sparse-Merkle Tree requiring only 4 hashes instead of up to 15
+/// - Fork nodes include complete neighbor information for reconstruction
+/// - Leaf nodes contain the actual key-value pair hashes
+///
+/// # Proof Size
+///
+/// For a trie of n items:
+/// - Traditional MPT: ~480 * log₁₆(n) bytes
+/// - Forestry: ~130 * log₁₆(n) bytes
+///
+/// # Type Parameters
+///
+/// * `D` - The digest algorithm implementing the [`Digest`] trait used for hashing operations
+///
+/// # Example
+///
+/// ```rust
+/// use mucrdt::prelude::*;
+/// use blake2::Blake2s256;
+///
+/// fn main() -> Result<(), Error> {
+///     let mut forestry = Forestry::<Blake2s256>::empty();
+///     forestry.insert(b"key", b"value")?;
+///     assert!(forestry.verify(b"key", b"value"));
+///
+///     Ok(())
+/// }
+/// ```
 pub struct Forestry<D: Digest> {
     pub proof: Proof,
     pub root: Hash,
@@ -21,6 +58,28 @@ pub struct Forestry<D: Digest> {
 
 impl<D: Digest> Forestry<D> {
     /// Constructs a new Forestry from its proof.
+    /// Creates a new Forestry instance from an existing proof.
+    ///
+    /// This method calculates the root hash from the provided proof and initializes
+    /// a new Forestry structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `proof` - An existing [`Proof`] to construct the Forestry from
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mucrdt::prelude::*;
+    /// # use blake2::Blake2s256;
+    ///
+    /// fn main() -> Result<(), Error> {
+    ///     let proof = Proof::new();
+    ///     let forestry = Forestry::<Blake2s256>::from_proof(proof);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     #[inline]
     pub fn from_proof(proof: Proof) -> Self {
         let root = Self::calculate_root(&proof);
@@ -31,6 +90,34 @@ impl<D: Digest> Forestry<D> {
         }
     }
 
+    /// Creates a new Forestry instance from a root hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `root` - A 32-byte array representing the root hash
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the new Forestry instance or an error if the
+    /// provided root hash has an invalid length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mucrdt::prelude::*;
+    /// # use blake2::Blake2s256;
+    ///
+    /// fn main() -> Result<(), Error> {
+    ///     let root = [0u8; 32];
+    ///     let forestry = Forestry::<Blake2s256>::from_root(&root).unwrap();
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidLength`] if the root hash is not exactly 32 bytes
     #[inline]
     pub fn from_root(root: &[u8]) -> Result<Self> {
         if root.len() != 32 {
