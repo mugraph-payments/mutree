@@ -7,7 +7,7 @@ use thiserror::Error as ThisError;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Debug, ThisError, PartialEq, Clone)]
+#[derive(Debug, ThisError)]
 pub enum Error {
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
@@ -38,6 +38,9 @@ pub enum Error {
 
     #[error("Invalid length")]
     InvalidLength,
+
+    #[error("Database error: {0}")]
+    DatabaseError(String),
 }
 
 impl From<hex::FromHexError> for Error {
@@ -69,5 +72,21 @@ impl From<TryFromSliceError> for Error {
     #[inline]
     fn from(error: TryFromSliceError) -> Self {
         Error::Deserialization(format!("invalid slice format: {}", error))
+    }
+}
+
+impl From<redb::Error> for Error {
+    #[coverage(off)]
+    #[inline]
+    fn from(value: redb::Error) -> Self {
+        Error::DatabaseError(value.to_string())
+    }
+}
+
+impl From<redb::DatabaseError> for Error {
+    #[coverage(off)]
+    #[inline]
+    fn from(value: redb::DatabaseError) -> Self {
+        Error::DatabaseError(value.to_string())
     }
 }

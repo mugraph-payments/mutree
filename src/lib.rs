@@ -7,8 +7,8 @@
 )]
 
 mod error;
-
 mod hash;
+mod mutree;
 mod trie;
 
 #[cfg(test)]
@@ -20,7 +20,8 @@ pub mod prelude {
     pub use crate::{
         error::{Error, Result},
         hash::Hash,
-        trie::{Trie, Neighbor, Proof, Step},
+        mutree::Mutree,
+        trie::{Neighbor, Proof, Step, Trie},
         CmRDT,
         CvRDT,
         FromBytes,

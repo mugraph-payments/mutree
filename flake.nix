@@ -7,7 +7,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-
   outputs =
     {
       nixpkgs,
@@ -22,18 +21,12 @@
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
-        inherit (pkgs)
-          makeRustPlatform
-          mkShell
-          rust-bin
-          ;
-
+        inherit (pkgs) makeRustPlatform mkShell rust-bin;
         rust = rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         rustPlatform = makeRustPlatform {
           rustc = rust;
           cargo = rust;
         };
-
         packages.default = rustPlatform.buildRustPackage {
           name = "mutree";
           src = ./.;
@@ -43,20 +36,15 @@
       in
       {
         inherit packages;
-
         devShells.default = mkShell {
           name = "mutree";
-
           buildInputs = with pkgs; [
             rust
 
-            cargo-machete
+            cargo-criterion
             cargo-mutants
             cargo-nextest
-            cargo-pgo
-            cargo-tarpaulin
             cargo-watch
-            llvmPackages_19.bolt
           ];
         };
       }
