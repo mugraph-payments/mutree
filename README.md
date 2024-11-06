@@ -146,7 +146,7 @@ fn main() -> Result<(), Error> {
 
 Contributions are welcome! Please follow these guidelines:
 
-- **Bug Reports and Feature Requests**: Use the [issue tracker](https://github.com/cfcosta/mutree/issues) to report bugs or suggest features.
+- **Bug Reports and Feature Requests**: Use the [issue tracker](https://github.com/mugraph-payments/mutree/issues) to report bugs or suggest features.
 - **Pull Requests**: Fork the repository, make your changes, and submit a pull request.
 - **Coding Standards**: Ensure your code complies with Rust's formatting standards by running `cargo fmt`.
 - **Testing**: Add unit tests for new features or bug fixes and run `cargo test` before submitting.

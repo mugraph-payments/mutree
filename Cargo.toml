@@ -1,6 +1,7 @@
 [package]
 name = "mutree"
-description = "A collection of well-tested CRDT implementations"
+description = "A throrougly tested Sparse Merkle Tree Data Structure"
+authors = ["Cainã Costa <me@cfcosta.com>"]
 version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
