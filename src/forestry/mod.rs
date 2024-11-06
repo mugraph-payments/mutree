@@ -268,15 +268,23 @@ impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
     }
 }
 
-#[cfg(all(test, any(feature = "blake3", feature = "sha2")))]
+#[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
 
-    use digest::consts::U32;
     use test_strategy::proptest;
 
     use super::*;
 
+    #[cfg_attr(
+        not(any(
+            feature = "blake2",
+            feature = "blake3",
+            feature = "sha2",
+            feature = "sha3"
+        )),
+        allow(unused)
+    )]
     macro_rules! generate_mpf_tests {
         ($digest:ty) => {
             paste::paste! {
@@ -565,7 +573,7 @@ mod tests {
     generate_mpf_tests!(Blake2s);
 
     #[cfg(feature = "blake2")]
-    type Blake2b = blake2::Blake2b<U32>;
+    type Blake2b = blake2::Blake2b<digest::consts::U32>;
     #[cfg(feature = "blake2")]
     generate_mpf_tests!(Blake2b);
 
