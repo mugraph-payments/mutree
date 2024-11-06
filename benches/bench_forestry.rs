@@ -7,50 +7,73 @@ use mucrdt::prelude::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
-fn generate_kv_pairs(n: usize) -> Vec<(Vec<u8>, Vec<u8>)> {
-    let mut rng = ChaCha8Rng::seed_from_u64(42);
-    (0..n)
-        .map(|_| {
-            let key_len = rng.gen_range(1..100);
-            let value_len = rng.gen_range(1..100);
-            let key: Vec<u8> = (0..key_len).map(|_| rng.gen()).collect();
-            let value: Vec<u8> = (0..value_len).map(|_| rng.gen()).collect();
-            (key, value)
-        })
-        .collect()
+struct BenchData {
+    pairs: Vec<(Vec<u8>, Vec<u8>)>,
+    rng: ChaCha8Rng,
+}
+
+impl BenchData {
+    fn new(size: usize) -> Self {
+        let mut rng = ChaCha8Rng::seed_from_u64(42);
+
+        let pairs = (0..size)
+            .map(|_| {
+                let key_len = rng.gen_range(1..100);
+                let value_len = rng.gen_range(1..100);
+                let key: Vec<u8> = (0..key_len).map(|_| rng.gen()).collect();
+                let value: Vec<u8> = (0..value_len).map(|_| rng.gen()).collect();
+                (key, value)
+            })
+            .collect();
+
+        Self { pairs, rng }
+    }
 }
 
 fn bench_insert<D: Digest + 'static>(c: &mut Criterion, name: &str) {
     let mut group = c.benchmark_group(format!("forestry_{}", name));
 
     for size in [10, 100, 1000].iter() {
-        let pairs = generate_kv_pairs(*size);
-
-        group.bench_with_input(BenchmarkId::new("sequential", size), &pairs, |b, pairs| {
-            b.iter(|| {
-                let mut forest = Forestry::<D>::empty();
-                for (key, value) in pairs {
-                    black_box(forest.insert(key, value)).unwrap();
-                }
-            });
-        });
+        let bench_data = BenchData::new(*size);
 
         group.bench_with_input(
-            BenchmarkId::new("random_order", size),
-            &pairs,
-            |b, pairs| {
+            BenchmarkId::new("sequential", size),
+            &bench_data,
+            |b, data| {
                 b.iter(|| {
-                    let mut forest = Forestry::<D>::empty();
-                    let mut pairs = pairs.clone();
-                    let mut rng = ChaCha8Rng::seed_from_u64(42);
-                    pairs.shuffle(&mut rng);
-                    for (key, value) in pairs {
-                        black_box(forest.insert(&key, &value)).unwrap();
+                    let mut forestry = black_box(Forestry::<D>::empty());
+
+                    for (key, value) in &data.pairs {
+                        black_box(forestry.insert(key, value)).unwrap();
                     }
                 });
             },
         );
+
+        group.bench_with_input(
+            BenchmarkId::new("random_order", size),
+            &bench_data,
+            |b, data| {
+                b.iter_with_setup(
+                    || {
+                        let mut pairs = data.pairs.clone();
+                        let mut rng = data.rng.clone();
+                        let mut forestry = Forestry::<D>::empty();
+
+                        pairs.shuffle(&mut rng);
+
+                        (forestry, pairs)
+                    },
+                    |(mut forestry, pairs)| {
+                        for (key, value) in pairs {
+                            black_box(forestry.insert(&key, &value)).unwrap();
+                        }
+                    },
+                );
+            },
+        );
     }
+
     group.finish();
 }
 
@@ -81,8 +104,8 @@ fn forestry_benchmark(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default()
-        .sample_size(100)
-        .measurement_time(Duration::from_secs(20));
+        .sample_size(10)
+        .measurement_time(Duration::from_secs(3));
     targets = forestry_benchmark
 );
 criterion_main!(benches);
