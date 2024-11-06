@@ -50,11 +50,13 @@
           buildInputs = with pkgs; [
             rust
 
-            cargo-nextest
-            cargo-watch
             cargo-machete
-            cargo-tarpaulin
             cargo-mutants
+            cargo-nextest
+            cargo-pgo
+            cargo-tarpaulin
+            cargo-watch
+            llvmPackages_19.bolt
           ];
         };
       }
