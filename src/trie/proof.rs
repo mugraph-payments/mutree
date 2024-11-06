@@ -188,6 +188,51 @@ mod tests {
 
     use super::*;
 
+    #[cfg(feature = "blake3")]
+    /// Tests an optimization that is possible on blake3 because the hash function itself is
+    /// incremental.
+    mod blake3_tests {
+        use std::io::Cursor;
+
+        
+        use crate::prelude::*;
+
+        #[test]
+        fn test_large_value_insert() -> Result<(), Error> {
+            let mut trie = Trie::<blake3::Hasher>::empty();
+            let key = b"test_key";
+            let large_data = vec![0u8; 1_000_000]; // 1MB of data
+            let reader = Cursor::new(large_data.clone());
+
+            let value_hash = trie.insert(key, reader)?;
+            assert!(trie.verify(key, &large_data));
+
+            // Verify same result with direct data
+            let mut regular_trie = Trie::<blake3::Hasher>::empty();
+            let regular_hash = regular_trie.insert(key, Cursor::new(&large_data))?;
+            assert_eq!(value_hash, regular_hash);
+
+            Ok(())
+        }
+
+        #[test]
+        fn test_incremental_hashing() -> Result<(), Error> {
+            let mut trie = Trie::<blake3::Hasher>::empty();
+            let key = b"test_key";
+            let data = vec![1u8; 100_000];
+
+            let hash1 = trie.insert(key, Cursor::new(&data))?;
+
+            let mut regular_trie = Trie::<blake3::Hasher>::empty();
+            let hash2 = regular_trie.insert(key, Cursor::new(&data))?;
+
+            assert_eq!(hash1, hash2);
+            assert_eq!(trie.root, regular_trie.root);
+
+            Ok(())
+        }
+    }
+
     #[proptest]
     fn test_proof_push_and_pop(mut proof: Proof, step: Step) {
         let original_len = proof.len();

@@ -36,13 +36,6 @@ use proptest::prelude::*;
 
 use self::prelude::*;
 
-#[cfg(test)]
-pub mod __dependencies {
-    pub use paste;
-    pub use proptest;
-    pub use test_strategy;
-}
-
 /// A Conflict-free Replicated Data Type (CRDT) that supports state-based replication.
 ///
 /// State-based CRDTs (CvRDTs) maintain their full state and merge with other replicas
@@ -164,4 +157,11 @@ where
 
 pub trait ToHex {
     fn to_hex(&self) -> String;
+}
+
+#[cfg(test)]
+pub mod __dependencies {
+    pub use paste;
+    pub use proptest;
+    pub use test_strategy;
 }

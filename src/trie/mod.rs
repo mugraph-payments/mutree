@@ -1,6 +1,6 @@
 #![allow(clippy::doc_lazy_continuation)]
 
-use std::marker::PhantomData;
+use std::{io::Read, marker::PhantomData};
 
 use digest::Digest;
 use proptest::prelude::*;
@@ -41,10 +41,11 @@ pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 /// ```rust
 /// use mutree::prelude::*;
 /// use blake2::Blake2s256;
+/// use std::io::Cursor;
 ///
 /// fn main() -> Result<(), Error> {
 ///     let mut trie = Trie::<Blake2s256>::empty();
-///     trie.insert(b"key", b"value")?;
+///     trie.insert(b"key", Cursor::new(b"value"))?;
 ///     assert!(trie.verify(b"key", b"value"));
 ///
 ///     Ok(())
@@ -56,7 +57,7 @@ pub struct Trie<D: Digest> {
     _phantom: PhantomData<D>,
 }
 
-impl<D: Digest> Trie<D> {
+impl<D: Digest + 'static> Trie<D> {
     /// Creates a new Trie instance from an existing proof.
     ///
     /// This method calculates the root hash from the provided proof and initializes
@@ -173,10 +174,11 @@ impl<D: Digest> Trie<D> {
     /// ```rust
     /// use mutree::prelude::*;
     /// use blake2::Blake2s256;
+    /// use std::io::Cursor;
     ///
     /// fn main() -> Result<(), Error> {
     ///     let mut trie = Trie::<Blake2s256>::empty();
-    ///     trie.insert(b"key", b"value")?;
+    ///     trie.insert(b"key", Cursor::new(b"value"))?;
     ///
     ///     assert!(trie.verify(b"key", b"value"));
     ///     assert!(!trie.verify(b"key", b"wrong_value"));
@@ -235,24 +237,81 @@ impl<D: Digest> Trie<D> {
     /// ```rust
     /// use mutree::prelude::*;
     /// use blake2::Blake2s256;
+    /// use std::io::Cursor;
     ///
     /// fn main() -> Result<(), Error> {
     ///     let mut trie = Trie::<Blake2s256>::empty();
-    ///     trie.insert(b"key", b"value")?;
+    ///     trie.insert(b"key", Cursor::new(b"value"))?;
     ///     assert!(trie.verify(b"key", b"value"));
     ///     
     ///     Ok(())
     /// }
     /// ```
     #[inline]
-    pub fn insert(&mut self, key: &[u8], value: &[u8]) -> Result<Hash, Error> {
+    pub fn insert<R: Read>(&mut self, key: &[u8], value: R) -> Result<Hash, Error> {
+        #[cfg(feature = "blake3")]
+        {
+            if std::any::TypeId::of::<D>() == std::any::TypeId::of::<blake3::Hasher>() {
+                // Use specialized blake3 implementation
+                return self.insert_blake3(key, value);
+            }
+        }
+        // Use default implementation for other hash functions
+        self.insert_default(key, value)
+    }
+
+    #[inline]
+    fn insert_default<R: Read>(&mut self, key: &[u8], mut value: R) -> Result<Hash, Error> {
         if key.is_empty() {
             return Err(Error::EmptyKeyOrValue);
         }
 
         let key_hash = Hash::digest::<D>(key);
-        let value_hash = Hash::digest::<D>(value);
+        let mut hasher = D::new();
+        let mut buffer = vec![0u8; 16384]; // 16KB chunks
 
+        loop {
+            match value.read(&mut buffer) {
+                Ok(0) => break, // EOF
+                Ok(n) => hasher.update(&buffer[..n]),
+                Err(e) => return Err(Error::Unknown(e.to_string())),
+            }
+        }
+
+        let value_hash = Hash::from_slice(hasher.finalize().as_ref());
+        self.proof = self.insert_to_proof(key_hash, value_hash);
+        self.root = Self::calculate_root(&self.proof);
+
+        Ok(value_hash)
+    }
+
+    #[cfg(feature = "blake3")]
+    #[inline]
+    fn insert_blake3<R: Read>(&mut self, key: &[u8], mut value: R) -> Result<Hash, Error> {
+        if key.is_empty() {
+            return Err(Error::EmptyKeyOrValue);
+        }
+
+        // Use blake3's optimized hasher for the key
+        let mut key_hasher = blake3::Hasher::new();
+        key_hasher.update(key);
+        let key_hash = Hash::from_slice(key_hasher.finalize().as_ref());
+
+        // Use blake3's streaming hasher for the value
+        let mut value_hasher = blake3::Hasher::new();
+        let mut buffer = vec![0u8; 65536]; // 64KB chunks for better streaming performance
+
+        loop {
+            match value.read(&mut buffer) {
+                Ok(0) => break,
+                Ok(n) => {
+                    value_hasher.update(&buffer[..n]);
+                }
+                Err(e) => return Err(Error::Unknown(e.to_string())),
+            }
+        }
+
+        let value_hash = Hash::from_slice(value_hasher.finalize().as_ref());
         self.proof = self.insert_to_proof(key_hash, value_hash);
         self.root = Self::calculate_root(&self.proof);
 
@@ -387,7 +446,7 @@ impl<D: Digest> std::fmt::Debug for Trie<D> {
     }
 }
 
-impl<D: Digest> Default for Trie<D> {
+impl<D: Digest + 'static> Default for Trie<D> {
     #[inline]
     fn default() -> Self {
         Self::empty()
@@ -484,7 +543,7 @@ mod tests {
                         value: String
                     ) {
                         let original_trie = trie.clone();
-                        trie.insert(key.as_bytes(), value.as_bytes())?;
+                        trie.insert(key.as_bytes(), std::io::Cursor::new(value.as_bytes()))?;
                         prop_assert!(trie.verify(key.as_bytes(), value.as_bytes()));
                         prop_assert_ne!(trie, original_trie);
                     }
@@ -578,8 +637,8 @@ mod tests {
                     #[test]
                     fn test_empty_key_or_value() {
                         let mut trie = Trie::<$digest>::empty();
-                        assert!(matches!(trie.insert(&[], b"value"), Err(Error::EmptyKeyOrValue)));
-                        assert!(trie.insert(b"key", &[]).is_ok());
+                        assert!(matches!(trie.insert(&[], std::io::Cursor::new(b"value")), Err(Error::EmptyKeyOrValue)));
+                        assert!(trie.insert(b"key", std::io::Cursor::new(&[])).is_ok());
                     }
 
                     #[proptest]
@@ -653,10 +712,10 @@ mod tests {
                     ) {
                         prop_assume!(key1 != key2);
 
-                        trie.insert(&key1, &[value1])?;
+                        trie.insert(&key1, std::io::Cursor::new(&[value1]))?;
                         let root1 = trie.root;
 
-                        trie.insert(&key2, &[value2])?;
+                        trie.insert(&key2, std::io::Cursor::new(&[value2]))?;
                         let root2 = trie.root;
 
                         prop_assert_ne!(root1, root2, "Different key-value pairs should produce different trie states");
@@ -695,7 +754,7 @@ mod tests {
                         #[strategy(vec(any::<u8>(), 100..1000))] large_value: Vec<u8>
                     ) {
                         let initial_size = trie.proof.len();
-                        trie.insert(&large_key, &large_value)?;
+                        trie.insert(&large_key, std::io::Cursor::new(&large_value))?;
                         prop_assert!(trie.verify(&large_key, &large_value), "Failed to verify large key-value pair");
 
                         // Check that trie size increase is reasonable
@@ -716,8 +775,8 @@ mod tests {
                         prop_assume!(key1 != key2);
 
                         // Insert two elements that should trigger path compression
-                        trie.insert(key1.as_bytes(), value1.as_bytes())?;
-                        trie.insert(key2.as_bytes(), value2.as_bytes())?;
+                        trie.insert(key1.as_bytes(), std::io::Cursor::new(value1.as_bytes()))?;
+                        trie.insert(key2.as_bytes(), std::io::Cursor::new(value2.as_bytes()))?;
 
                         // Verify the proof length is optimal after compression
                         prop_assert!(

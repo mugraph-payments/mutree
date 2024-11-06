@@ -8,7 +8,7 @@ pub struct Mutree<D: Digest> {
     pub database: Database,
 }
 
-impl<D: Digest> Mutree<D> {
+impl<D: Digest + 'static> Mutree<D> {
     #[inline]
     pub fn new_in_memory() -> Result<Self, Error> {
         Ok(Self {

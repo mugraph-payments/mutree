@@ -33,7 +33,7 @@ impl<D: Digest + 'static> BenchData<D> {
             let value_len = rng.gen_range(100..10000);
             let key: Vec<u8> = (0..key_len).map(|_| rng.gen()).collect();
             let value: Vec<u8> = (0..value_len).map(|_| rng.gen()).collect();
-            trie.insert(&key, &value).unwrap();
+            trie.insert(&key, &*value).unwrap();
         }
 
         // Generate a single key-value pair for insertion
@@ -61,7 +61,7 @@ fn bench_insert<D: Digest + 'static, T: Measurement>(c: &mut Criterion<T>, name:
         group.bench_with_input(BenchmarkId::new("insert", size), &bench_data, |b, data| {
             b.iter(|| {
                 let mut trie = black_box(data.trie.clone());
-                black_box(trie.insert(&data.insert_key, &data.insert_value)).unwrap();
+                black_box(trie.insert(&data.insert_key, &*data.insert_value)).unwrap();
             });
         });
     }

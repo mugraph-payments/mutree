@@ -1,3 +1,5 @@
+#![allow(clippy::test_attr_in_doctest)]
+
 /// Tests properties required for state-based CRDTs (CvRDT).
 ///
 /// This macro generates test cases that verify the following CRDT properties:
@@ -10,17 +12,17 @@
 ///
 /// ```rust
 /// use mutree::prelude::*;
-/// 
+///
 /// #[derive(Debug, Clone, PartialEq, Default)]
 /// struct Counter(u64);
-/// 
+///
 /// impl CvRDT for Counter {
 ///     fn merge(&mut self, other: &Self) -> Result<(), Error> {
 ///         self.0 = std::cmp::max(self.0, other.0);
 ///         Ok(())
 ///     }
 /// }
-/// 
+///
 /// // Generates comprehensive CRDT property tests
 /// test_state_crdt_properties!(Counter);
 /// ```
@@ -134,33 +136,33 @@ macro_rules! test_op_crdt_properties_inner {
 /// Basic usage with same type for state and operations:
 /// ```rust
 /// use mutree::prelude::*;
-/// 
+///
 /// #[derive(Debug, Clone, PartialEq, Default)]
 /// struct Counter(u64);
-/// 
+///
 /// impl CmRDT<Counter> for Counter {
 ///     fn apply(&mut self, op: &Counter) -> Result<(), Error> {
 ///         self.0 += op.0;
 ///         Ok(())
 ///     }
 /// }
-/// 
+///
 /// test_op_crdt_properties!(Counter);
 /// ```
 ///
 /// Usage with separate operation type:
 /// ```rust
 /// use mutree::prelude::*;
-/// 
+///
 /// #[derive(Debug, Clone, PartialEq, Default)]
 /// struct Counter(u64);
-/// 
+///
 /// #[derive(Debug, Clone, PartialEq)]
 /// enum CounterOp {
 ///     Increment(u64),
 ///     Decrement(u64)
 /// }
-/// 
+///
 /// impl CmRDT<CounterOp> for Counter {
 ///     fn apply(&mut self, op: &CounterOp) -> Result<(), Error> {
 ///         match op {
@@ -170,7 +172,7 @@ macro_rules! test_op_crdt_properties_inner {
 ///         Ok(())
 ///     }
 /// }
-/// 
+///
 /// test_op_crdt_properties!(Counter, CounterOp);
 /// ```
 #[macro_export]
