@@ -1,6 +1,6 @@
-# µcrdt
+# Mutree
 
-µcrdt is a Rust library implementing Conflict-Free Replicated Data Types (CRDTs) with a focus on efficiency and correctness. The primary feature of this library is the Merkle-Patricia Forestry, an optimized variant of the Merkle-Patricia Trie designed for succinct proofs and efficient cryptographic authentication.
+Mutree is a Rust library implementing a variant of the [Merkle Patricia Forestry](https://github.com/aiken-lang/merkle-patricia-forestry) Data Structure, with a general focus of interacting with the Cardano Blockchain. It aims to be compatible whenever possible, but the project is going at some point to have its own implementation of On-chain Aiken code.
 
 ## Table of Contents
 
@@ -95,11 +95,11 @@ A leaf step represents a terminal node and includes:
 
 ### Adding Dependencies
 
-To use µcrdt in your Rust project, add the following to your `Cargo.toml`:
+To use Mutree in your Rust project, add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mucrdt = { git = "https://github.com/cfcosta/mucrdt.git" }
+mutree = { git = "https://github.com/mugraph-payments/mutree.git" }
 ```
 
 ### Basic Operations
@@ -107,10 +107,10 @@ mucrdt = { git = "https://github.com/cfcosta/mucrdt.git" }
 Below is an example of how to use the Merkle-Patricia Forestry:
 
 ```rust
-use mucrdt::prelude::*;
+use mutree::prelude::*;
 use blake2::Blake2s256; // Or any other supported Digest implementation
 
-type Forestry = mucrdt::prelude::Forestry<Blake2s256>;
+type Forestry = mutree::prelude::Forestry<Blake2s256>;
 
 fn main() -> Result<(), Error> {
     // Create a new empty forestry
@@ -146,7 +146,7 @@ fn main() -> Result<(), Error> {
 
 Contributions are welcome! Please follow these guidelines:
 
-- **Bug Reports and Feature Requests**: Use the [issue tracker](https://github.com/cfcosta/mucrdt/issues) to report bugs or suggest features.
+- **Bug Reports and Feature Requests**: Use the [issue tracker](https://github.com/cfcosta/mutree/issues) to report bugs or suggest features.
 - **Pull Requests**: Fork the repository, make your changes, and submit a pull request.
 - **Coding Standards**: Ensure your code complies with Rust's formatting standards by running `cargo fmt`.
 - **Testing**: Add unit tests for new features or bug fixes and run `cargo test` before submitting.

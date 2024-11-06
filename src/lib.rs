@@ -53,7 +53,7 @@ pub mod __dependencies {
 /// # Examples
 ///
 /// ```rust
-/// use mucrdt::prelude::*;
+/// use mutree::prelude::*;
 /// use test_strategy::Arbitrary;
 ///
 /// // A simple max counter CRDT

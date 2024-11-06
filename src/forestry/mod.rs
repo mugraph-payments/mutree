@@ -39,7 +39,7 @@ pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 /// # Example
 ///
 /// ```rust
-/// use mucrdt::prelude::*;
+/// use mutree::prelude::*;
 /// use blake2::Blake2s256;
 ///
 /// fn main() -> Result<(), Error> {
@@ -69,7 +69,7 @@ impl<D: Digest> Forestry<D> {
     /// # Examples
     ///
     /// ```
-    /// # use mucrdt::prelude::*;
+    /// # use mutree::prelude::*;
     /// # use blake2::Blake2s256;
     ///
     /// fn main() -> Result<(), Error> {
@@ -103,7 +103,7 @@ impl<D: Digest> Forestry<D> {
     /// # Examples
     ///
     /// ```
-    /// # use mucrdt::prelude::*;
+    /// # use mutree::prelude::*;
     /// # use blake2::Blake2s256;
     ///
     /// fn main() -> Result<(), Error> {
@@ -171,7 +171,7 @@ impl<D: Digest> Forestry<D> {
     /// # Examples
     ///
     /// ```rust
-    /// use mucrdt::prelude::*;
+    /// use mutree::prelude::*;
     /// use blake2::Blake2s256;
     ///
     /// fn main() -> Result<(), Error> {
@@ -233,7 +233,7 @@ impl<D: Digest> Forestry<D> {
     /// # Examples
     ///
     /// ```rust
-    /// use mucrdt::prelude::*;
+    /// use mutree::prelude::*;
     /// use blake2::Blake2s256;
     ///
     /// fn main() -> Result<(), Error> {

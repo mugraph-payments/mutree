@@ -11,7 +11,7 @@ use criterion::{
 };
 use criterion_cycles_per_byte::CyclesPerByte;
 use digest::Digest;
-use mucrdt::prelude::*;
+use mutree::prelude::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 

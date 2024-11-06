@@ -35,7 +35,7 @@
         };
 
         packages.default = rustPlatform.buildRustPackage {
-          name = "mucrdt";
+          name = "mutree";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
           doCheck = false;
@@ -45,7 +45,7 @@
         inherit packages;
 
         devShells.default = mkShell {
-          name = "mucrdt";
+          name = "mutree";
 
           buildInputs = with pkgs; [
             rust

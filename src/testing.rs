@@ -9,7 +9,7 @@
 /// # Example
 ///
 /// ```rust
-/// use mucrdt::prelude::*;
+/// use mutree::prelude::*;
 /// 
 /// #[derive(Debug, Clone, PartialEq, Default)]
 /// struct Counter(u64);
@@ -133,7 +133,7 @@ macro_rules! test_op_crdt_properties_inner {
 ///
 /// Basic usage with same type for state and operations:
 /// ```rust
-/// use mucrdt::prelude::*;
+/// use mutree::prelude::*;
 /// 
 /// #[derive(Debug, Clone, PartialEq, Default)]
 /// struct Counter(u64);
@@ -150,7 +150,7 @@ macro_rules! test_op_crdt_properties_inner {
 ///
 /// Usage with separate operation type:
 /// ```rust
-/// use mucrdt::prelude::*;
+/// use mutree::prelude::*;
 /// 
 /// #[derive(Debug, Clone, PartialEq, Default)]
 /// struct Counter(u64);
@@ -206,7 +206,7 @@ macro_rules! test_op_crdt_properties {
 /// # Example
 ///
 /// ```rust
-/// use mucrdt::test_to_bytes;
+/// use mutree::test_to_bytes;
 ///
 /// #[derive(Debug, Clone, PartialEq)]
 /// struct MyType(Vec<u8>);
@@ -283,7 +283,7 @@ macro_rules! test_to_bytes {
 /// # Example
 ///
 /// ```rust
-/// use mucrdt::test_to_hex;
+/// use mutree::test_to_hex;
 ///
 /// #[derive(Debug, Clone, PartialEq)]
 /// struct MyType(Vec<u8>);
@@ -341,7 +341,7 @@ macro_rules! test_to_hex {
 /// # Example
 ///
 /// ```rust
-/// use mucrdt::prop_assert_changes;
+/// use mutree::prop_assert_changes;
 ///
 /// #[test]
 /// fn test_counter_increment() {
@@ -373,7 +373,7 @@ macro_rules! prop_assert_changes {
 /// # Example
 ///
 /// ```rust
-/// use mucrdt::prop_assert_does_not_change;
+/// use mutree::prop_assert_does_not_change;
 ///
 /// #[test]
 /// fn test_counter_invalid_decrement() {
