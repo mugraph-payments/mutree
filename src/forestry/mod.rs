@@ -57,7 +57,6 @@ pub struct Forestry<D: Digest> {
 }
 
 impl<D: Digest> Forestry<D> {
-    /// Constructs a new Forestry from its proof.
     /// Creates a new Forestry instance from an existing proof.
     ///
     /// This method calculates the root hash from the provided proof and initializes
@@ -147,7 +146,45 @@ impl<D: Digest> Forestry<D> {
         self.proof.is_empty()
     }
 
-    /// Verifies if an element is present in the trie with a specific value.
+    /// Verifies if a key-value pair exists in the Forestry.
+    ///
+    /// This method:
+    /// 1. Hashes the key and value using digest algorithm D
+    /// 2. Traverses the proof structure to:
+    ///    - Find a Leaf step matching the key-value hashes
+    ///    - Verify the authenticity of the path using the root hash
+    ///
+    /// The verification process ensures:
+    /// - The key-value pair exists exactly as provided
+    /// - The proof structure is valid and matches the root hash
+    /// - All branch steps have valid Sparse-Merkle Tree structures
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to verify, as a byte slice
+    /// * `value` - The value to verify, as a byte slice
+    ///
+    /// # Returns
+    ///
+    /// Returns true if the key-value pair exists and is authenticated by the proof
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use mucrdt::prelude::*;
+    /// use blake2::Blake2s256;
+    ///
+    /// fn main() -> Result<(), Error> {
+    ///     let mut forestry = Forestry::<Blake2s256>::empty();
+    ///     forestry.insert(b"key", b"value")?;
+    ///
+    ///     assert!(forestry.verify(b"key", b"value"));
+    ///     assert!(!forestry.verify(b"key", b"wrong_value"));
+    ///     assert!(!forestry.verify(b"wrong_key", b"value"));
+    ///     
+    ///     Ok(())
+    /// }
+    /// ```
     #[inline]
     pub fn verify(&self, key: &[u8], value: &[u8]) -> bool {
         if self.is_empty() {
@@ -167,7 +204,46 @@ impl<D: Digest> Forestry<D> {
         contains_pair && calculated_root == self.root
     }
 
-    /// Inserts an element to the trie.
+    /// Inserts a key-value pair into the Merkle-Patricia Forestry.
+    ///
+    /// This method:
+    /// 1. Hashes the key and value using the digest algorithm D
+    /// 2. Updates the proof structure by:
+    ///    - Adding necessary Branch/Fork/Leaf steps
+    ///    - Removing any existing leaf with the same key
+    ///    - Compressing paths where possible
+    /// 3. Recalculates the root hash
+    ///
+    /// The insertion maintains the following invariants:
+    /// - Branch nodes use a mini Sparse-Merkle Tree requiring only 4 hashes
+    /// - Fork nodes include complete neighbor information
+    /// - Leaf nodes contain the actual key-value pair hashes
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to insert, as a byte slice
+    /// * `value` - The value to insert, as a byte slice
+    ///
+    /// # Returns
+    ///
+    /// Returns the hash of the inserted value if successful, or an error if:
+    /// - The key is empty
+    /// - The insertion would violate the trie structure
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use mucrdt::prelude::*;
+    /// use blake2::Blake2s256;
+    ///
+    /// fn main() -> Result<(), Error> {
+    ///     let mut forestry = Forestry::<Blake2s256>::empty();
+    ///     forestry.insert(b"key", b"value")?;
+    ///     assert!(forestry.verify(b"key", b"value"));
+    ///     
+    ///     Ok(())
+    /// }
+    /// ```
     #[inline]
     pub fn insert(&mut self, key: &[u8], value: &[u8]) -> Result<Hash, Error> {
         if key.is_empty() {
@@ -332,7 +408,7 @@ impl<D: Digest + 'static> Arbitrary for Forestry<D> {
 
 impl<D: Digest + 'static> CvRDT for Forestry<D> {
     #[inline]
-    fn merge(&mut self, other: &Self) -> Result<()> {
+    fn merge(&mut self, other: &Self) -> Result<(), Error> {
         let mut merged_proof = self.proof.clone();
         for step in other.proof.iter() {
             if !merged_proof.contains(step) {
@@ -349,7 +425,7 @@ impl<D: Digest + 'static> CvRDT for Forestry<D> {
 
 impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
     #[inline]
-    fn apply(&mut self, op: &Proof) -> Result<()> {
+    fn apply(&mut self, op: &Proof) -> Result<(), Error> {
         let mpf = Self::from_proof(op.clone());
         self.merge(&mpf)
     }

@@ -1,3 +1,29 @@
+/// Tests properties required for state-based CRDTs (CvRDT).
+///
+/// This macro generates test cases that verify the following CRDT properties:
+/// - Changes are applied correctly
+/// - Operations are idempotent
+/// - Operations are commutative
+/// - Operations are associative
+///
+/// # Example
+///
+/// ```rust
+/// use mucrdt::prelude::*;
+/// 
+/// #[derive(Debug, Clone, PartialEq, Default)]
+/// struct Counter(u64);
+/// 
+/// impl CvRDT for Counter {
+///     fn merge(&mut self, other: &Self) -> Result<(), Error> {
+///         self.0 = std::cmp::max(self.0, other.0);
+///         Ok(())
+///     }
+/// }
+/// 
+/// // Generates comprehensive CRDT property tests
+/// test_state_crdt_properties!(Counter);
+/// ```
 #[macro_export]
 macro_rules! test_state_crdt_properties {
     ($type:ty) => {
@@ -97,6 +123,56 @@ macro_rules! test_op_crdt_properties_inner {
     };
 }
 
+/// Tests properties required for operation-based CRDTs (CmRDT).
+///
+/// This macro generates test cases that verify:
+/// - Operations are idempotent
+/// - Operations are commutative
+///
+/// # Examples
+///
+/// Basic usage with same type for state and operations:
+/// ```rust
+/// use mucrdt::prelude::*;
+/// 
+/// #[derive(Debug, Clone, PartialEq, Default)]
+/// struct Counter(u64);
+/// 
+/// impl CmRDT<Counter> for Counter {
+///     fn apply(&mut self, op: &Counter) -> Result<(), Error> {
+///         self.0 += op.0;
+///         Ok(())
+///     }
+/// }
+/// 
+/// test_op_crdt_properties!(Counter);
+/// ```
+///
+/// Usage with separate operation type:
+/// ```rust
+/// use mucrdt::prelude::*;
+/// 
+/// #[derive(Debug, Clone, PartialEq, Default)]
+/// struct Counter(u64);
+/// 
+/// #[derive(Debug, Clone, PartialEq)]
+/// enum CounterOp {
+///     Increment(u64),
+///     Decrement(u64)
+/// }
+/// 
+/// impl CmRDT<CounterOp> for Counter {
+///     fn apply(&mut self, op: &CounterOp) -> Result<(), Error> {
+///         match op {
+///             CounterOp::Increment(n) => self.0 += n,
+///             CounterOp::Decrement(n) => self.0 -= n,
+///         }
+///         Ok(())
+///     }
+/// }
+/// 
+/// test_op_crdt_properties!(Counter, CounterOp);
+/// ```
 #[macro_export]
 macro_rules! test_op_crdt_properties {
     ($type: ty) => {
@@ -119,6 +195,37 @@ macro_rules! test_op_crdt_properties {
     };
 }
 
+/// Tests serialization/deserialization roundtrip properties.
+///
+/// Verifies that a type implementing ToBytes and FromBytes:
+/// - Can roundtrip through bytes without data loss
+/// - Produces consistent byte output
+/// - Has different byte representations for different values
+/// - Correctly identifies zero/empty states
+///
+/// # Example
+///
+/// ```rust
+/// use mucrdt::test_to_bytes;
+///
+/// #[derive(Debug, Clone, PartialEq)]
+/// struct MyType(Vec<u8>);
+///
+/// impl ToBytes for MyType {
+///     type Output = Vec<u8>;
+///     fn to_bytes(&self) -> Self::Output {
+///         self.0.clone()
+///     }
+/// }
+///
+/// impl FromBytes for MyType {
+///     fn from_bytes(bytes: &[u8]) -> Result<Self> {
+///         Ok(MyType(bytes.to_vec()))
+///     }
+/// }
+///
+/// test_to_bytes!(MyType);
+/// ```
 #[macro_export]
 macro_rules! test_to_bytes {
     ($type:ty) => {
@@ -166,6 +273,35 @@ macro_rules! test_to_bytes {
     };
 }
 
+/// Tests hex encoding/decoding roundtrip properties.
+///
+/// Verifies that a type implementing ToHex and FromHex:
+/// - Can roundtrip through hex strings without data loss
+/// - Produces consistent hex output
+/// - Has different hex representations for different values
+///
+/// # Example
+///
+/// ```rust
+/// use mucrdt::test_to_hex;
+///
+/// #[derive(Debug, Clone, PartialEq)]
+/// struct MyType(Vec<u8>);
+///
+/// impl ToHex for MyType {
+///     fn to_hex(&self) -> String {
+///         hex::encode(&self.0)
+///     }
+/// }
+///
+/// impl FromHex for MyType {
+///     fn from_hex(hex: &str) -> Result<Self> {
+///         Ok(MyType(hex::decode(hex)?))
+///     }
+/// }
+///
+/// test_to_hex!(MyType);
+/// ```
 #[macro_export]
 macro_rules! test_to_hex {
     ($type:ty) => {
@@ -198,6 +334,25 @@ macro_rules! test_to_hex {
     };
 }
 
+/// Asserts that an action changes a value.
+///
+/// Useful for testing that operations actually modify state.
+///
+/// # Example
+///
+/// ```rust
+/// use mucrdt::prop_assert_changes;
+///
+/// #[test]
+/// fn test_counter_increment() {
+///     let mut counter = 0u64;
+///     
+///     prop_assert_changes!(
+///         counter += 1,  // Action that should change counter
+///         counter       // Value that should change
+///     );
+/// }
+/// ```
 #[macro_export]
 macro_rules! prop_assert_changes {
     ($action: expr, $value: expr) => {
@@ -211,6 +366,25 @@ macro_rules! prop_assert_changes {
     };
 }
 
+/// Asserts that an action does not change a value.
+///
+/// Useful for testing idempotency or that invalid operations have no effect.
+///
+/// # Example
+///
+/// ```rust
+/// use mucrdt::prop_assert_does_not_change;
+///
+/// #[test]
+/// fn test_counter_invalid_decrement() {
+///     let mut counter = 0u64;
+///     
+///     prop_assert_does_not_change!(
+///         if counter > 0 { counter -= 1 },  // Action that should not change counter
+///         counter                           // Value that should not change
+///     );
+/// }
+/// ```
 #[macro_export]
 macro_rules! prop_assert_does_not_change {
     ($action: expr, $value: expr) => {

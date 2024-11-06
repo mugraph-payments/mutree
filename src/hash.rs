@@ -5,7 +5,16 @@ use proptest::{prelude::*, strategy::BoxedStrategy};
 
 use crate::prelude::*;
 
-/// Custom Hash type containing the inner field
+/// A 32-byte cryptographic hash used throughout the Merkle-Patricia Forestry.
+///
+/// This type provides a fixed-size hash that serves multiple purposes:
+/// - Authenticating nodes in the Merkle tree structure
+/// - Representing keys and values in a space-efficient manner
+/// - Enabling secure comparison and verification of trie contents
+///
+/// The hash implementation is transparent (wraps a [u8; 32]) and provides
+/// constant-time operations where possible. It supports common traits like
+/// Display, Debug, and various conversion traits for flexibility.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
 pub struct Hash([u8; 32]);
