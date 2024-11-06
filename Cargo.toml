@@ -38,6 +38,6 @@ rand = "0.8.5"
 rand_chacha = { version = "0.3.1", features = ["simd"] }
 
 [[bench]]
-name = "forestry"
-path = "benches/bench_forestry.rs"
+name = "trie"
+path = "benches/bench_trie.rs"
 harness = false

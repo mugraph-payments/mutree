@@ -6,7 +6,7 @@ use crate::{
     hash::Hash,
 };
 
-/// A neighbor node in a Merkle-Patricia Forestry.
+/// A neighbor node in a Merkle-Patricia Trie.
 ///
 /// Neighbors represent adjacent nodes in the trie structure and are used to construct
 /// proof steps. Each neighbor contains:

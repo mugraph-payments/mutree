@@ -5,7 +5,7 @@ use proptest::{prelude::*, strategy::BoxedStrategy};
 
 use crate::prelude::*;
 
-/// A 32-byte cryptographic hash used throughout the Merkle-Patricia Forestry.
+/// A 32-byte cryptographic hash used throughout the Merkle-Patricia Trie.
 ///
 /// This type provides a fixed-size hash that serves multiple purposes:
 /// - Authenticating nodes in the Merkle tree structure

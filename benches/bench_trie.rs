@@ -16,7 +16,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
 struct BenchData<D: Digest + 'static> {
-    forestry: Forestry<D>,
+    trie: Trie<D>,
     insert_key: Vec<u8>,
     insert_value: Vec<u8>,
     rng: ChaCha8Rng,
@@ -25,7 +25,7 @@ struct BenchData<D: Digest + 'static> {
 impl<D: Digest + 'static> BenchData<D> {
     fn new(size: usize) -> Self {
         let mut rng = ChaCha8Rng::seed_from_u64(42);
-        let mut forestry = Forestry::<D>::empty();
+        let mut trie = Trie::<D>::empty();
 
         // Pre-populate the Forestry
         for _ in 0..size {
@@ -33,7 +33,7 @@ impl<D: Digest + 'static> BenchData<D> {
             let value_len = rng.gen_range(1..100);
             let key: Vec<u8> = (0..key_len).map(|_| rng.gen()).collect();
             let value: Vec<u8> = (0..value_len).map(|_| rng.gen()).collect();
-            forestry.insert(&key, &value).unwrap();
+            trie.insert(&key, &value).unwrap();
         }
 
         // Generate a single key-value pair for insertion
@@ -43,7 +43,7 @@ impl<D: Digest + 'static> BenchData<D> {
         let insert_value: Vec<u8> = (0..insert_value_len).map(|_| rng.gen()).collect();
 
         Self {
-            forestry,
+            trie,
             insert_key,
             insert_value,
             rng,
@@ -53,15 +53,15 @@ impl<D: Digest + 'static> BenchData<D> {
 
 fn bench_insert<D: Digest + 'static, T: Measurement>(c: &mut Criterion<T>, name: &str) {
     let type_name = type_name::<T>().split(":").take(1).collect::<Vec<_>>()[0];
-    let mut group = c.benchmark_group(format!("forestry/{}/{}", name, type_name));
+    let mut group = c.benchmark_group(format!("trie/{}/{}", name, type_name));
 
     for size in [10, 100, 1000].iter() {
         let bench_data = BenchData::<D>::new(*size);
 
         group.bench_with_input(BenchmarkId::new("insert", size), &bench_data, |b, data| {
             b.iter(|| {
-                let mut forestry = black_box(data.forestry.clone());
-                black_box(forestry.insert(&data.insert_key, &data.insert_value)).unwrap();
+                let mut trie = black_box(data.trie.clone());
+                black_box(trie.insert(&data.insert_key, &data.insert_value)).unwrap();
             });
         });
     }
@@ -69,7 +69,7 @@ fn bench_insert<D: Digest + 'static, T: Measurement>(c: &mut Criterion<T>, name:
     group.finish();
 }
 
-fn forestry_benchmark<T: Measurement>(c: &mut Criterion<T>) {
+fn trie_benchmark<T: Measurement>(c: &mut Criterion<T>) {
     // Blake2s-256
     #[cfg(feature = "blake2")]
     bench_insert::<blake2::Blake2s256, T>(c, "blake2s");
@@ -92,11 +92,11 @@ fn forestry_benchmark<T: Measurement>(c: &mut Criterion<T>) {
 }
 
 fn cycles_per_byte_bench(c: &mut Criterion<CyclesPerByte>) {
-    forestry_benchmark(c)
+    trie_benchmark(c)
 }
 
 fn wall_time_bench(c: &mut Criterion<WallTime>) {
-    forestry_benchmark(c);
+    trie_benchmark(c);
 }
 
 criterion_group!(

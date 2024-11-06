@@ -8,8 +8,8 @@
 
 mod error;
 
-mod forestry;
 mod hash;
+mod trie;
 
 #[cfg(test)]
 pub mod testing;
@@ -19,8 +19,8 @@ pub mod prelude {
 
     pub use crate::{
         error::{Error, Result},
-        forestry::{Forestry, Neighbor, Proof, Step},
         hash::Hash,
+        trie::{Trie, Neighbor, Proof, Step},
         CmRDT,
         CvRDT,
         FromBytes,

@@ -4,7 +4,7 @@ use proptest::{array::uniform4, prelude::*};
 
 use crate::prelude::*;
 
-/// A single step in a Merkle-Patricia Forestry proof.
+/// A single step in a Merkle-Patricia Trie proof.
 ///
 /// Steps represent the different node types encountered while traversing the trie:
 /// - Branch: An internal node with multiple children, optimized using a mini Sparse-Merkle Tree

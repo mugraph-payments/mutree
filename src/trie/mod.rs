@@ -13,10 +13,10 @@ mod step;
 
 pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 
-/// A Merkle-Patricia Forestry implementation that provides succinct proofs through an optimized
+/// A Merkle-Patricia Trie implementation that provides succinct proofs through an optimized
 /// branch structure using tiny Sparse-Merkle trees.
 ///
-/// The Forestry uses a radix-16 (hexadecimal) structure where each branch node's neighbors are
+/// The Trie uses a radix-16 (hexadecimal) structure where each branch node's neighbors are
 /// arranged in a binary Sparse-Merkle tree of depth 4. This innovative approach reduces proof sizes
 /// from ~480 bytes to ~130 bytes per branch step while maintaining security.
 ///
@@ -30,7 +30,7 @@ pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 ///
 /// For a trie of n items:
 /// - Traditional MPT: ~480 * log₁₆(n) bytes
-/// - Forestry: ~130 * log₁₆(n) bytes
+/// - Trie: ~130 * log₁₆(n) bytes
 ///
 /// # Type Parameters
 ///
@@ -43,28 +43,28 @@ pub use self::{neighbor::Neighbor, proof::Proof, step::Step};
 /// use blake2::Blake2s256;
 ///
 /// fn main() -> Result<(), Error> {
-///     let mut forestry = Forestry::<Blake2s256>::empty();
-///     forestry.insert(b"key", b"value")?;
-///     assert!(forestry.verify(b"key", b"value"));
+///     let mut trie = Trie::<Blake2s256>::empty();
+///     trie.insert(b"key", b"value")?;
+///     assert!(trie.verify(b"key", b"value"));
 ///
 ///     Ok(())
 /// }
 /// ```
-pub struct Forestry<D: Digest> {
+pub struct Trie<D: Digest> {
     pub proof: Proof,
     pub root: Hash,
     _phantom: PhantomData<D>,
 }
 
-impl<D: Digest> Forestry<D> {
-    /// Creates a new Forestry instance from an existing proof.
+impl<D: Digest> Trie<D> {
+    /// Creates a new Trie instance from an existing proof.
     ///
     /// This method calculates the root hash from the provided proof and initializes
-    /// a new Forestry structure.
+    /// a new Trie structure.
     ///
     /// # Arguments
     ///
-    /// * `proof` - An existing [`Proof`] to construct the Forestry from
+    /// * `proof` - An existing [`Proof`] to construct the Trie from
     ///
     /// # Examples
     ///
@@ -74,7 +74,7 @@ impl<D: Digest> Forestry<D> {
     ///
     /// fn main() -> Result<(), Error> {
     ///     let proof = Proof::new();
-    ///     let forestry = Forestry::<Blake2s256>::from_proof(proof);
+    ///     let trie = Trie::<Blake2s256>::from_proof(proof);
     ///
     ///     Ok(())
     /// }
@@ -89,7 +89,7 @@ impl<D: Digest> Forestry<D> {
         }
     }
 
-    /// Creates a new Forestry instance from a root hash.
+    /// Creates a new Trie instance from a root hash.
     ///
     /// # Arguments
     ///
@@ -97,7 +97,7 @@ impl<D: Digest> Forestry<D> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing the new Forestry instance or an error if the
+    /// Returns a `Result` containing the new Trie instance or an error if the
     /// provided root hash has an invalid length.
     ///
     /// # Examples
@@ -108,7 +108,7 @@ impl<D: Digest> Forestry<D> {
     ///
     /// fn main() -> Result<(), Error> {
     ///     let root = [0u8; 32];
-    ///     let forestry = Forestry::<Blake2s256>::from_root(&root).unwrap();
+    ///     let trie = Trie::<Blake2s256>::from_root(&root).unwrap();
     ///
     ///     Ok(())
     /// }
@@ -130,7 +130,7 @@ impl<D: Digest> Forestry<D> {
         })
     }
 
-    /// Constructs a new empty Forestry.
+    /// Constructs a new empty Trie.
     #[inline]
     pub fn empty() -> Self {
         Self {
@@ -140,13 +140,13 @@ impl<D: Digest> Forestry<D> {
         }
     }
 
-    /// Checks if the Forestry is empty.
+    /// Checks if the Trie is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.proof.is_empty()
     }
 
-    /// Verifies if a key-value pair exists in the Forestry.
+    /// Verifies if a key-value pair exists in the Trie.
     ///
     /// This method:
     /// 1. Hashes the key and value using digest algorithm D
@@ -175,12 +175,12 @@ impl<D: Digest> Forestry<D> {
     /// use blake2::Blake2s256;
     ///
     /// fn main() -> Result<(), Error> {
-    ///     let mut forestry = Forestry::<Blake2s256>::empty();
-    ///     forestry.insert(b"key", b"value")?;
+    ///     let mut trie = Trie::<Blake2s256>::empty();
+    ///     trie.insert(b"key", b"value")?;
     ///
-    ///     assert!(forestry.verify(b"key", b"value"));
-    ///     assert!(!forestry.verify(b"key", b"wrong_value"));
-    ///     assert!(!forestry.verify(b"wrong_key", b"value"));
+    ///     assert!(trie.verify(b"key", b"value"));
+    ///     assert!(!trie.verify(b"key", b"wrong_value"));
+    ///     assert!(!trie.verify(b"wrong_key", b"value"));
     ///     
     ///     Ok(())
     /// }
@@ -204,7 +204,7 @@ impl<D: Digest> Forestry<D> {
         contains_pair && calculated_root == self.root
     }
 
-    /// Inserts a key-value pair into the Merkle-Patricia Forestry.
+    /// Inserts a key-value pair into the Merkle-Patricia Trie.
     ///
     /// This method:
     /// 1. Hashes the key and value using the digest algorithm D
@@ -237,9 +237,9 @@ impl<D: Digest> Forestry<D> {
     /// use blake2::Blake2s256;
     ///
     /// fn main() -> Result<(), Error> {
-    ///     let mut forestry = Forestry::<Blake2s256>::empty();
-    ///     forestry.insert(b"key", b"value")?;
-    ///     assert!(forestry.verify(b"key", b"value"));
+    ///     let mut trie = Trie::<Blake2s256>::empty();
+    ///     trie.insert(b"key", b"value")?;
+    ///     assert!(trie.verify(b"key", b"value"));
     ///     
     ///     Ok(())
     /// }
@@ -321,7 +321,7 @@ impl<D: Digest> Forestry<D> {
         }
     }
 
-    /// Calculates the root hash of the Merkle Patricia Forestry.
+    /// Calculates the root hash of the Merkle Patricia Trie.
     fn calculate_root(proof: &Proof) -> Hash {
         let mut hasher = D::new();
         for step in proof.iter() {
@@ -357,7 +357,7 @@ impl<D: Digest> Forestry<D> {
     }
 }
 
-impl<D: Digest> Clone for Forestry<D> {
+impl<D: Digest> Clone for Trie<D> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -368,33 +368,33 @@ impl<D: Digest> Clone for Forestry<D> {
     }
 }
 
-impl<D: Digest> PartialEq for Forestry<D> {
+impl<D: Digest> PartialEq for Trie<D> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root
     }
 }
 
-impl<D: Digest> Eq for Forestry<D> {}
+impl<D: Digest> Eq for Trie<D> {}
 
-impl<D: Digest> std::fmt::Debug for Forestry<D> {
+impl<D: Digest> std::fmt::Debug for Trie<D> {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Forestry")
+        f.debug_struct("Trie")
             .field("proof", &self.proof)
             .field("root", &self.root)
             .finish()
     }
 }
 
-impl<D: Digest> Default for Forestry<D> {
+impl<D: Digest> Default for Trie<D> {
     #[inline]
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<D: Digest + 'static> Arbitrary for Forestry<D> {
+impl<D: Digest + 'static> Arbitrary for Trie<D> {
     type Parameters = ();
     type Strategy = BoxedStrategy<Self>;
 
@@ -406,7 +406,7 @@ impl<D: Digest + 'static> Arbitrary for Forestry<D> {
     }
 }
 
-impl<D: Digest + 'static> CvRDT for Forestry<D> {
+impl<D: Digest + 'static> CvRDT for Trie<D> {
     #[inline]
     fn merge(&mut self, other: &Self) -> Result<(), Error> {
         let mut merged_proof = self.proof.clone();
@@ -423,7 +423,7 @@ impl<D: Digest + 'static> CvRDT for Forestry<D> {
     }
 }
 
-impl<D: Digest + 'static> CmRDT<Proof> for Forestry<D> {
+impl<D: Digest + 'static> CmRDT<Proof> for Trie<D> {
     #[inline]
     fn apply(&mut self, op: &Proof) -> Result<(), Error> {
         let mpf = Self::from_proof(op.clone());
@@ -457,9 +457,9 @@ mod tests {
                     use proptest::collection::vec;
                     use ::test_strategy::proptest;
 
-                    type ForestryT = Forestry<$digest>;
-                    $crate::test_state_crdt_properties!(ForestryT);
-                    $crate::test_op_crdt_properties!(ForestryT, Proof);
+                    type TrieT = Trie<$digest>;
+                    $crate::test_state_crdt_properties!(TrieT);
+                    $crate::test_op_crdt_properties!(TrieT, Proof);
 
                     fn non_empty_string() -> impl Strategy<Value = String> {
                         any::<String>().prop_filter("must not be empty", |s| !s.is_empty())
@@ -467,7 +467,7 @@ mod tests {
 
                     #[proptest]
                     fn test_verify_proof(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(non_empty_string())] key: String,
                         value: String
                     ) {
@@ -479,7 +479,7 @@ mod tests {
 
                     #[proptest]
                     fn test_insert(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(non_empty_string())] key: String,
                         value: String
                     ) {
@@ -491,7 +491,7 @@ mod tests {
 
                     #[proptest]
                     fn test_multiple_inserts(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(non_empty_string())] key1: String,
                         value1: String,
                         #[strategy(non_empty_string())] key2: String,
@@ -515,7 +515,7 @@ mod tests {
 
                     #[test]
                     fn test_empty_trie() {
-                        let empty_trie = Forestry::<$digest>::empty();
+                        let empty_trie = Trie::<$digest>::empty();
                         assert!(empty_trie.is_empty());
                     }
 
@@ -524,7 +524,7 @@ mod tests {
                         #[strategy(non_empty_string())] key: String,
                         value: String
                     ) {
-                        let mut trie = Forestry::<$digest>::empty();
+                        let mut trie = Trie::<$digest>::empty();
                         assert!(trie.is_empty());
 
                         let empty_root = trie.root;
@@ -546,11 +546,11 @@ mod tests {
                         prop_assume!(value1 != value2);
 
                         // Test empty trie
-                        let empty_trie = Forestry::<$digest>::empty();
+                        let empty_trie = Trie::<$digest>::empty();
                         prop_assert!(!empty_trie.verify(key1.as_bytes(), value1.as_bytes()));
 
                         // Test non-empty trie
-                        let mut non_empty_trie = Forestry::<$digest>::empty();
+                        let mut non_empty_trie = Trie::<$digest>::empty();
                         non_empty_trie.insert(key1.as_bytes(), value1.as_bytes())?;
 
                         prop_assert!(non_empty_trie.verify(key1.as_bytes(), value1.as_bytes()));
@@ -567,7 +567,7 @@ mod tests {
 
                     #[proptest]
                     fn test_proof_size(
-                        trie: Forestry<$digest>,
+                        trie: Trie<$digest>,
                     ) {
                         let proof = trie.proof.clone();
                         prop_assert!(proof.len() <= 130 * (4 + 1),
@@ -577,15 +577,15 @@ mod tests {
 
                     #[test]
                     fn test_empty_key_or_value() {
-                        let mut trie = Forestry::<$digest>::empty();
+                        let mut trie = Trie::<$digest>::empty();
                         assert!(matches!(trie.insert(&[], b"value"), Err(Error::EmptyKeyOrValue)));
                         assert!(trie.insert(b"key", &[]).is_ok());
                     }
 
                     #[proptest]
                     fn test_root_proof_equality(
-                        trie1: Forestry<$digest>,
-                        trie2: Forestry<$digest>
+                        trie1: Trie<$digest>,
+                        trie2: Trie<$digest>
                     ) {
                         prop_assert_eq!(
                             trie1.root == trie2.root,
@@ -596,29 +596,29 @@ mod tests {
 
                     #[proptest]
                     fn test_default_is_empty(
-                        default_trie: Forestry<$digest>
+                        default_trie: Trie<$digest>
                     ) {
                         prop_assert!(default_trie.is_empty(), "Default instance should be empty");
                     }
 
                     #[proptest]
                     fn test_root_matches_calculated(
-                        trie: Forestry<$digest>
+                        trie: Trie<$digest>
                     ) {
-                        let calculated_root = Forestry::<$digest>::calculate_root(&trie.proof);
+                        let calculated_root = Trie::<$digest>::calculate_root(&trie.proof);
                         prop_assert_eq!(trie.root, calculated_root, "Root should match calculated root");
                     }
 
                     #[proptest]
                     fn test_from_proof_root_calculation(proof: Proof) {
-                        let trie = Forestry::<$digest>::from_proof(proof.clone());
-                        let calculated_root = Forestry::<$digest>::calculate_root(&proof);
+                        let trie = Trie::<$digest>::from_proof(proof.clone());
+                        let calculated_root = Trie::<$digest>::calculate_root(&proof);
                         prop_assert_eq!(trie.root, calculated_root, "Root should match calculated root after from_proof");
                     }
 
                     #[proptest]
                     fn test_verify_non_existent(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(non_empty_string())] key1: String,
                         value1: String,
                         #[strategy(non_empty_string())] key2: String,
@@ -645,7 +645,7 @@ mod tests {
 
                     #[proptest]
                     fn test_second_preimage_resistance(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(vec(any::<u8>(), 1..100))] key1: Vec<u8>,
                         #[strategy(vec(any::<u8>(), 1..100))] key2: Vec<u8>,
                         value1: u8,
@@ -668,7 +668,7 @@ mod tests {
 
                     #[proptest]
                     fn test_malicious_proof_resistance(
-                        trie: Forestry<$digest>,
+                        trie: Trie<$digest>,
                         key: Vec<u8>,
                         value: u8,
                         malicious_steps: Vec<Step>
@@ -679,7 +679,7 @@ mod tests {
                         let mut malicious_proof = trie.proof.clone();
                         malicious_proof.extend(malicious_steps);
 
-                        let malicious_trie = Forestry::<$digest>::from_proof(malicious_proof);
+                        let malicious_trie = Trie::<$digest>::from_proof(malicious_proof);
 
                         // Verify that the malicious trie doesn't falsely claim to contain the key-value pair
                         prop_assert!(!malicious_trie.verify(&key, &[value]), "Malicious proof falsely verified");
@@ -690,7 +690,7 @@ mod tests {
 
                     #[proptest]
                     fn test_large_key_value_pairs(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(vec(any::<u8>(), 100..1000))] large_key: Vec<u8>,
                         #[strategy(vec(any::<u8>(), 100..1000))] large_value: Vec<u8>
                     ) {
@@ -707,7 +707,7 @@ mod tests {
 
                     #[proptest]
                     fn test_path_compression(
-                        mut trie: Forestry<$digest>,
+                        mut trie: Trie<$digest>,
                         #[strategy(non_empty_string())] key1: String,
                         #[strategy(non_empty_string())] key2: String,
                         value1: String,

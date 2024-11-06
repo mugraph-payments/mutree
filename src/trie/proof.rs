@@ -8,7 +8,7 @@ use proptest::{collection::vec, prelude::*};
 use super::Step;
 use crate::prelude::Hash;
 
-/// A complete proof in a Merkle-Patricia Forestry.
+/// A complete proof in a Merkle-Patricia Trie.
 ///
 /// A proof consists of a sequence of steps that authenticate a path through the trie,
 /// allowing verification of membership, insertion, or deletion operations. The proof

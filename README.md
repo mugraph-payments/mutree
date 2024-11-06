@@ -110,31 +110,31 @@ Below is an example of how to use the Merkle-Patricia Forestry:
 use mutree::prelude::*;
 use blake2::Blake2s256; // Or any other supported Digest implementation
 
-type Forestry = mutree::prelude::Forestry<Blake2s256>;
+type Trie = mutree::prelude::Trie<Blake2s256>;
 
 fn main() -> Result<(), Error> {
-    // Create a new empty forestry
-    let mut forestry = Forestry::empty();
+    // Create a new empty trie
+    let mut trie = Trie::empty();
 
     // Insert key-value pairs
-    forestry.insert(b"key1", b"value1")?;
-    forestry.insert(b"key2", b"value2")?;
+    trie.insert(b"key1", b"value1")?;
+    trie.insert(b"key2", b"value2")?;
 
     // Verify the presence of a key-value pair
-    let is_verified = forestry.verify(b"key1", b"value1");
+    let is_verified = trie.verify(b"key1", b"value1");
     assert!(is_verified, "Failed to verify key1");
 
     // Get the root hash for proof purposes
-    let root_hash = forestry.root;
+    let root_hash = trie.root;
 
-    // Merge with another forestry (useful in distributed scenarios)
-    let mut other_forestry = Forestry::empty();
-    other_forestry.insert(b"key3", b"value3")?;
+    // Merge with another trie (useful in distributed scenarios)
+    let mut other_trie = Trie::empty();
+    other_trie.insert(b"key3", b"value3")?;
 
-    forestry.merge(&other_forestry)?;
+    trie.merge(&other_trie)?;
 
     // Verify that key3 is now present
-    assert!(forestry.verify(b"key3", b"value3"), "Failed to verify key3");
+    assert!(trie.verify(b"key3", b"value3"), "Failed to verify key3");
 
     Ok(())
 }
