@@ -27,17 +27,26 @@
           rustc = rust;
           cargo = rust;
         };
+
         packages.default = rustPlatform.buildRustPackage {
           name = "mutree";
           src = ./.;
+          buildFeatures = [
+            "blake2"
+            "blake3"
+            "sha2"
+            "sha3"
+          ];
           cargoLock.lockFile = ./Cargo.lock;
-          doCheck = false;
+          useNextest = true;
         };
       in
       {
         inherit packages;
+
         devShells.default = mkShell {
           name = "mutree";
+
           buildInputs = with pkgs; [
             rust
 
